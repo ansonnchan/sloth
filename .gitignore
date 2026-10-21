@@ -1,0 +1,23 @@
+# Go build and test output
+/sloth
+/sloth.exe
+/bin/
+/dist/
+*.test
+*.out
+coverage*.out
+
+# Generated diagnostic reports
+/sloth-*.json
+
+# Local environment and editor files
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
+
+# Private planning and repository audit notes
+/docs/planning/prd-review.md
+/docs/planning/repository-status.md
