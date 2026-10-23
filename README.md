@@ -136,6 +136,8 @@ Windows AMD64. Homebrew publishing is intentionally post-v1.
 
 The project uses Go and Cobra. Planned measurement work will use `net/http` and
 `net/http/httptrace`; release automation will use GitHub Actions and GoReleaser.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for issue naming, branch workflow,
+required checks, and pull-request expectations.
 
 Run the current CLI from the repository root:
 
@@ -147,9 +149,11 @@ go run ./cmd/sloth --version
 Verification commands:
 
 ```bash
+test -z "$(gofmt -l .)"
+go vet ./...
 go test ./...
 go test -race ./...
-go vet ./...
+go build ./...
 ```
 
 Read [AGENTS.md](AGENTS.md) and the linked planning documents before changing

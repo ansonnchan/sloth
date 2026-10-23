@@ -1,0 +1,67 @@
+name: Bug report
+description: Report reproducible incorrect Sloth behavior.
+title: "SH-XX: "
+labels:
+  - type:chore
+body:
+  - type: input
+    id: issue-id
+    attributes:
+      label: Issue ID
+      description: Permanent identifier assigned to this fix.
+      placeholder: SH-XX
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem and scope
+      description: Describe the incorrect behavior and the smallest affected area.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide deterministic commands or a minimal local fixture. Remove secrets and sensitive targets.
+      placeholder: |
+        1. Run ...
+        2. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+      description: State both outcomes and include relevant exit codes or streams.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include Sloth version/build metadata, Go version if built locally, OS, and architecture.
+      placeholder: sloth dev; go1.x; linux/amd64
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Fix acceptance evidence
+      description: Identify the regression test, boundary cases, and verification commands required.
+    validations:
+      required: true
+
+  - type: textarea
+    id: safety-privacy
+    attributes:
+      label: Safety and privacy impact
+      description: Note any exposure of secrets, bodies, URLs, filesystem data, traffic limits, or cancellation behavior.
+      placeholder: No impact, or describe the risk and containment.
+    validations:
+      required: true
