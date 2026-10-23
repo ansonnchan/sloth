@@ -134,7 +134,9 @@ func validateBounds(options Options) error {
 		{options.Warmups < 0, "warmups", "must not be negative", "example: --warmups 5"},
 		{options.Rate <= 0 || math.IsNaN(options.Rate) || math.IsInf(options.Rate, 0), "rate", "must be a finite value greater than zero", "example: --rate 5"},
 		{len(options.ConcurrencyStages) == 0, "concurrency", "at least one stage is required", "example: --concurrency 1,5,10"},
+		{options.RedirectLimit <= 0, "redirect-limit", "must be greater than zero", "example: --redirect-limit 5"},
 		{options.BodyLimit <= 0, "body-limit", "must be greater than zero", "example: --body-limit 1048576"},
+		{options.SampleLimit <= 0, "sample-limit", "must be greater than zero", "example: --sample-limit 1000"},
 		{options.Color != ColorAuto && options.Color != ColorAlways && options.Color != ColorNever, "color", "must be auto, always, or never", "example: --color auto"},
 	}
 

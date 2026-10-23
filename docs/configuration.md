@@ -15,9 +15,11 @@ commands and reports use the same values.
 | Request start rate | 5 per second |
 | Concurrency stages | 1, 5, 10 |
 | Follow redirects | No |
+| Redirect hop limit | 5 |
 | Terminal color | Automatic |
 | Response-body read limit | 1 MiB |
 | Include individual samples | No |
+| Included sample limit | 1,000 |
 
 These values describe configuration only. SH-04 defines the separate normal
 and absolute safety ceilings that constrain overrides.
@@ -40,3 +42,24 @@ increasing, and no larger than the measured request count. Headers use a
 
 Validation errors identify the invalid field without repeating raw targets,
 headers, credentials, or query values.
+
+## Safety ceilings
+
+Sloth evaluates the complete experiment suite before any request. Warm-ups count
+toward the traffic budget even though they are excluded from latency metrics.
+
+| Setting | Normal ceiling | Absolute ceiling |
+|---|---:|---:|
+| Measured requests per experiment | 1,000 | 10,000 |
+| Total requests including warm-ups | 10,000 | 50,000 |
+| Request starts per second | 100 | 1,000 |
+| Concurrency | 50 | 200 |
+| Request timeout | 1 minute | 5 minutes |
+| Response-body read limit | 10 MiB | 100 MiB |
+| Included samples | 1,000 | 10,000 |
+| Redirect hops | 5 | 10 |
+
+Exceeding a normal ceiling requires `--allow-high-load`. Absolute ceilings
+cannot be bypassed. `POST`, `PUT`, `PATCH`, and `DELETE` require
+`--allow-unsafe-methods`; the warning includes the complete planned request
+budget so the acknowledgement is informed and noninteractive.

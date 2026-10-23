@@ -19,7 +19,7 @@ func TestDefaults(t *testing.T) {
 	if !reflect.DeepEqual(got.ConcurrencyStages, []int{1, 5, 10}) {
 		t.Fatalf("concurrency stages = %v", got.ConcurrencyStages)
 	}
-	if got.FollowRedirects || got.Color != ColorAuto || got.BodyLimit != 1<<20 || got.IncludeSamples {
+	if got.FollowRedirects || got.RedirectLimit != 5 || got.Color != ColorAuto || got.BodyLimit != 1<<20 || got.IncludeSamples || got.SampleLimit != 1_000 {
 		t.Fatalf("policy defaults = %+v", got)
 	}
 }
