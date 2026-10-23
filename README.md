@@ -87,6 +87,7 @@ See the [delivery roadmap](docs/planning/roadmap.md),
 Shared runtime defaults are documented in [Configuration](docs/configuration.md).
 Automation-facing streams and statuses are documented in the
 [CLI contract](docs/cli-contract.md).
+Version injection is documented in [Build metadata](docs/builds.md).
 
 ## Branch and release flow
 

@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/ansonnchan/sloth/internal/buildinfo"
 	"github.com/spf13/cobra"
 )
 
 // Run executes the Sloth command and returns a stable process status.
-func Run(args []string, stdout, stderr io.Writer, version string) int {
-	command := newRootCommand(stdout, stderr, version)
+func Run(args []string, stdout, stderr io.Writer, info buildinfo.Info) int {
+	command := newRootCommand(stdout, stderr, info)
 	return int(execute(command, args, stderr))
 }
 
@@ -23,11 +24,11 @@ func execute(command *cobra.Command, args []string, stderr io.Writer) ExitCode {
 	return ExitSuccess
 }
 
-func newRootCommand(stdout, stderr io.Writer, version string) *cobra.Command {
+func newRootCommand(stdout, stderr io.Writer, info buildinfo.Info) *cobra.Command {
 	command := &cobra.Command{
 		Use:           "sloth",
 		Short:         "Sloth explains client-observable API latency",
-		Version:       version,
+		Version:       info.Display(),
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Args: func(command *cobra.Command, args []string) error {

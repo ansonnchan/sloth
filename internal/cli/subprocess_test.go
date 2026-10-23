@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ansonnchan/sloth/internal/buildinfo"
 	"github.com/spf13/cobra"
 )
 
@@ -77,13 +78,13 @@ func TestCLIHelperProcess(t *testing.T) {
 	var code ExitCode
 	switch mode {
 	case "help":
-		code = ExitCode(Run([]string{"--help"}, os.Stdout, os.Stderr, "dev"))
+		code = ExitCode(Run([]string{"--help"}, os.Stdout, os.Stderr, buildinfo.Info{Version: "dev"}))
 	case "version":
-		code = ExitCode(Run([]string{"--version"}, os.Stdout, os.Stderr, "dev"))
+		code = ExitCode(Run([]string{"--version"}, os.Stdout, os.Stderr, buildinfo.Info{Version: "dev"}))
 	case "usage":
-		code = ExitCode(Run([]string{"unexpected"}, os.Stdout, os.Stderr, "dev"))
+		code = ExitCode(Run([]string{"unexpected"}, os.Stdout, os.Stderr, buildinfo.Info{Version: "dev"}))
 	default:
-		command := newRootCommand(os.Stdout, os.Stderr, "dev")
+		command := newRootCommand(os.Stdout, os.Stderr, buildinfo.Info{Version: "dev"})
 		var err error
 		switch mode {
 		case "runtime":
