@@ -116,7 +116,9 @@ func TestValidateRejectsInvalidBoundaries(t *testing.T) {
 		{"zero concurrency", func(options *Options) { options.ConcurrencyStages = []int{0} }},
 		{"unordered concurrency", func(options *Options) { options.ConcurrencyStages = []int{5, 1} }},
 		{"duplicate concurrency", func(options *Options) { options.ConcurrencyStages = []int{1, 1} }},
+		{"zero redirect limit", func(options *Options) { options.RedirectLimit = 0 }},
 		{"zero body limit", func(options *Options) { options.BodyLimit = 0 }},
+		{"zero sample limit", func(options *Options) { options.SampleLimit = 0 }},
 		{"invalid color", func(options *Options) { options.Color = "sometimes" }},
 	}
 
