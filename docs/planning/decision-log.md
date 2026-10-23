@@ -83,6 +83,14 @@ request moves the tested `dev` state to `main` only after the roadmap gate passe
 Agents may commit and push verified feature work but stop before pull-request
 approval or merging unless the user explicitly authorizes it.
 
+### D-014 — Exit code contract
+
+`0` means success or no gated regression, `1` means runtime or measurement
+failure, `2` means usage/configuration/report validation failure, `3` means a
+confirmed configured regression, and `130` means interruption. Cobra's own
+error and usage printing is disabled so the executable boundary emits one
+diagnostic with the correct status.
+
 ### D-015 — Safety ceilings
 
 Normal and absolute ceilings are documented in `docs/configuration.md`.
@@ -92,13 +100,6 @@ estimate includes every experiment and warm-up. Unsafe methods separately
 require `--allow-unsafe-methods`.
 
 ## Proposed decisions to ratify in foundation issues
-
-### D-014 — Exit code contract
-
-Proposed: `0` success/no gated regression, `1` runtime or measurement failure,
-`2` usage/config/report validation failure, `3` confirmed configured regression,
-and `130` interruption. Cobra behavior and cross-platform constraints must be
-tested before this becomes public API.
 
 ### D-016 — Response-body cap semantics
 
