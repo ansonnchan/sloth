@@ -85,6 +85,8 @@ See the [delivery roadmap](docs/planning/roadmap.md),
 [context graph](docs/planning/context-graph.md), and
 [issue backlog](docs/planning/issue-backlog.md) for the current planning source.
 Shared runtime defaults are documented in [Configuration](docs/configuration.md).
+Automation-facing streams and statuses are documented in the
+[CLI contract](docs/cli-contract.md).
 
 ## Branch and release flow
 
