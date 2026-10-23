@@ -1,0 +1,73 @@
+name: Feature issue
+description: Define one scoped, independently verifiable Sloth change.
+title: "SH-XX: "
+labels:
+  - type:feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use the next assigned SH-XX ID and keep the proposal within Sloth's local, bounded diagnostic scope.
+
+  - type: input
+    id: issue-id
+    attributes:
+      label: Issue ID
+      description: Permanent identifier assigned from the backlog.
+      placeholder: SH-XX
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What single outcome should this issue deliver, and what is explicitly out of scope?
+      placeholder: Describe the focused change and its boundary.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why this matters
+      description: Connect the change to measurement, experimentation, interpretation, or comparison.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria and evidence
+      description: List observable criteria and the tests or commands that will prove each one.
+      placeholder: |
+        - [ ] Behavior is covered by ...
+        - [ ] Failure and boundary cases are covered by ...
+    validations:
+      required: true
+
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List prerequisite SH-XX issues, or write None.
+      placeholder: SH-XX, SH-YY
+    validations:
+      required: true
+
+  - type: textarea
+    id: safety-privacy
+    attributes:
+      label: Safety and privacy impact
+      description: Address traffic bounds, unsafe methods, secrets, bodies, output, persistence, and cancellation as applicable.
+      placeholder: No impact, or describe the controls and tests required.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope-check
+    attributes:
+      label: Scope confirmation
+      options:
+        - label: This does not add a frontend, hosted service, database, telemetry, unrestricted load generation, LLM diagnosis, or tracing backend.
+          required: true

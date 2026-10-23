@@ -11,8 +11,9 @@ Sloth combines bounded measurements, controlled experiments, statistics, and
 evidence-based explanations in one local Go binary.
 
 > [!NOTE]
-> Sloth is currently in the repository-foundation and design stage. Commands and
-> output shown below describe the planned v1 interface and are not yet released.
+> Sloth is under active development. The root command is available, while the
+> workflows shown below describe the planned v1 interface and are not yet
+> released.
 
 ## Planned workflows
 
@@ -83,6 +84,10 @@ Work is organized as ordered `SH-XX` issues:
 See the [delivery roadmap](docs/planning/roadmap.md),
 [context graph](docs/planning/context-graph.md), and
 [issue backlog](docs/planning/issue-backlog.md) for the current planning source.
+Shared runtime defaults are documented in [Configuration](docs/configuration.md).
+Automation-facing streams and statuses are documented in the
+[CLI contract](docs/cli-contract.md).
+Version injection is documented in [Build metadata](docs/builds.md).
 
 ## Branch and release flow
 
@@ -129,15 +134,26 @@ Windows AMD64. Homebrew publishing is intentionally post-v1.
 
 ## Development
 
-The project will use Go, Cobra, `net/http`, `net/http/httptrace`, Go's testing
-tools, GitHub Actions, and GoReleaser.
+The project uses Go and Cobra. Planned measurement work will use `net/http` and
+`net/http/httptrace`; release automation will use GitHub Actions and GoReleaser.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for issue naming, branch workflow,
+required checks, and pull-request expectations.
 
-Expected verification commands after the Go module is initialized:
+Run the current CLI from the repository root:
 
 ```bash
+go run ./cmd/sloth --help
+go run ./cmd/sloth --version
+```
+
+Verification commands:
+
+```bash
+test -z "$(gofmt -l .)"
+go vet ./...
 go test ./...
 go test -race ./...
-go vet ./...
+go build ./...
 ```
 
 Read [AGENTS.md](AGENTS.md) and the linked planning documents before changing
@@ -145,4 +161,4 @@ behavior. Implementation begins with `SH-01`.
 
 ## License
 
-Sloth is planned for release under the MIT License.
+Sloth is released under the [MIT License](LICENSE).
