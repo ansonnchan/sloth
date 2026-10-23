@@ -4,6 +4,7 @@ package config
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -77,7 +78,7 @@ type Effective struct {
 // Resolve snapshots parsed options for use by orchestration and reporting.
 func Resolve(options Options) Effective {
 	return Effective{
-		method:            options.Method,
+		method:            strings.ToUpper(strings.TrimSpace(options.Method)),
 		timeout:           options.Timeout,
 		requests:          options.Requests,
 		warmups:           options.Warmups,
