@@ -51,24 +51,26 @@ func CalculateLatency(values []time.Duration) (LatencyStatistics, error) {
 	statistics.Min = sorted[0]
 	statistics.Max = sorted[len(sorted)-1]
 	statistics.Mean = roundedDuration(mean)
-	statistics.Median = percentile(sorted, 0.50)
-	statistics.P90 = percentile(sorted, 0.90)
-	statistics.P95 = percentile(sorted, 0.95)
-	statistics.P99 = percentile(sorted, 0.99)
+	statistics.Median = percentile(sorted, 50)
+	statistics.P90 = percentile(sorted, 90)
+	statistics.P95 = percentile(sorted, 95)
+	statistics.P99 = percentile(sorted, 99)
 	statistics.PopulationStdDev = roundedDuration(deviation)
 	return statistics, nil
 }
 
-func percentile(sorted []time.Duration, probability float64) time.Duration {
-	position := float64(len(sorted)-1) * probability
-	lower := int(math.Floor(position))
-	upper := int(math.Ceil(position))
-	if lower == upper {
+func percentile(sorted []time.Duration, percent int64) time.Duration {
+	position := int64(len(sorted)-1) * percent
+	lower := int(position / 100)
+	remainder := position % 100
+	if remainder == 0 {
 		return sorted[lower]
 	}
-	fraction := position - float64(lower)
-	value := float64(sorted[lower]) + (float64(sorted[upper])-float64(sorted[lower]))*fraction
-	return roundedDuration(value)
+	delta := int64(sorted[lower+1] - sorted[lower])
+	// Splitting the product keeps interpolation exact without overflowing when
+	// durations approach time.Duration's maximum value.
+	offset := (delta/100)*remainder + ((delta%100)*remainder+50)/100
+	return sorted[lower] + time.Duration(offset)
 }
 
 func roundedDuration(nanoseconds float64) time.Duration {
