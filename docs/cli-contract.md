@@ -20,3 +20,19 @@ Sloth keeps machine-readable data separate from human diagnostics:
 
 These values are public automation behavior. New error categories must map to
 one of these codes unless a separately reviewed contract change is required.
+
+## Inspect command
+
+`sloth inspect URL` performs one bounded request. It supports:
+
+- `--method` / `-X` for GET, HEAD, POST, PUT, PATCH, or DELETE;
+- repeatable `--header` / `-H` values in `Name: Value` form;
+- `--body-file` for a replayable request body;
+- `--timeout` and `--body-limit` bounds;
+- `--follow-redirects` with `--redirect-limit`; and
+- the `--allow-unsafe-methods` and `--allow-high-load` acknowledgements.
+
+Validation and safety policy run before Sloth opens a body file or contacts the
+target. Ctrl+C cancels the in-flight request and exits with status 130. HTTP
+4xx/5xx responses remain successful measurements; timeouts, transport errors,
+body-limit failures, and cancellation use their documented nonzero statuses.

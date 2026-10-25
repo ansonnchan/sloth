@@ -11,17 +11,18 @@ Sloth combines bounded measurements, controlled experiments, statistics, and
 evidence-based explanations in one local Go binary.
 
 > [!NOTE]
-> Sloth is under active development. The root command is available, while the
-> workflows shown below describe the planned v1 interface and are not yet
-> released.
+> Sloth is under active development. Single-request inspection is available;
+> diagnosis, export, and comparison remain planned v1 workflows until their
+> roadmap milestones land.
 
-## Planned workflows
+## Workflows
 
 ```bash
-# Break down one request
+# Inspect one bounded request (available)
 sloth inspect http://localhost:8080/api/users
 
 # Run controlled diagnostic experiments
+# (planned)
 sloth diagnose http://localhost:8080/api/users
 
 # Save a versioned, redacted JSON report
