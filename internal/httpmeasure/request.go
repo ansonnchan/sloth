@@ -246,6 +246,7 @@ func isSensitiveHeader(name string, configured map[string]struct{}) bool {
 	}
 	return strings.Contains(normalized, "token") ||
 		strings.Contains(normalized, "secret") ||
+		strings.Contains(normalized, "credential") ||
 		strings.Contains(normalized, "api-key") ||
 		strings.Contains(normalized, "apikey")
 }
