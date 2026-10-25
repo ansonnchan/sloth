@@ -123,11 +123,12 @@ type Execution struct {
 // Result preserves warm-up evidence and partial execution separately from the
 // measured samples consumed by statistical aggregation.
 type Result struct {
-	Plan          Plan            `json:"-"`
-	Execution     Execution       `json:"execution"`
-	Warmups       WarmupSamples   `json:"warmups"`
-	WarmupSummary OutcomeSummary  `json:"warmup_summary"`
-	Measured      MeasuredSamples `json:"measured"`
+	Plan            Plan            `json:"-"`
+	WarmupExecution Execution       `json:"warmup_execution"`
+	Execution       Execution       `json:"execution"`
+	Warmups         WarmupSamples   `json:"warmups"`
+	WarmupSummary   OutcomeSummary  `json:"warmup_summary"`
+	Measured        MeasuredSamples `json:"measured"`
 }
 
 // OutcomeSummary keeps warm-up failures visible without mixing their latency
