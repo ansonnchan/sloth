@@ -54,3 +54,9 @@ aggregate. Stages run in ascending order but share the suite limiter and request
 budget, so worker count cannot change the configured aggregate start rate.
 Reports record achieved peak and time-weighted in-flight concurrency; cancelled
 runs retain completed and partial stages in configured order.
+
+Runner lifecycle tests cover cancellation before admission, while waiting for a
+rate slot, during request execution, and while results drain. Slow and failing
+executors are exercised at high iteration counts to verify worker and request
+bounds, channel closure, partial results, and deadlock-free shutdown. CI repeats
+the runner package under Go's race detector.
