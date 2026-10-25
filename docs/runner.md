@@ -34,3 +34,10 @@ It attempts the configured measured count after warm-up unless cancellation,
 budget exhaustion, or an internal runner failure stops it. HTTP errors, body
 limits, and timeouts are measured outcomes rather than runner failures, so their
 valid timing and response evidence remains in the baseline aggregate.
+
+The connection experiment owns separate fresh and reused transports. Measured
+samples alternate between arms using a deterministic seed recorded with the
+result, while both arms share request configuration, timeout, and the suite-wide
+start limiter. A comparison is sufficient only when every fresh sample observes
+a new connection and the reused arm observes reuse. HTTP/2 multiplexing and
+proxy behavior remain explicit caveats; configured mode alone is not evidence.
