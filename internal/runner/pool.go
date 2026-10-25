@@ -103,6 +103,9 @@ func (p *Pool) Run(ctx context.Context, arrivals []Arrival, limiter *StartLimite
 	var workers sync.WaitGroup
 	var stateMu sync.Mutex
 	stopReason := experiment.StopNone
+	stopJobs := make(chan struct{})
+	var stopJobsOnce sync.Once
+	stopProducing := func() { stopJobsOnce.Do(func() { close(stopJobs) }) }
 
 	setStop := func(reason experiment.StopReason) {
 		stateMu.Lock()
@@ -117,12 +120,17 @@ func (p *Pool) Run(ctx context.Context, arrivals []Arrival, limiter *StartLimite
 		go func() {
 			defer workers.Done()
 			for arrival := range jobs {
+				select {
+				case <-stopJobs:
+					return
+				default:
+				}
 				if runCtx.Err() != nil {
 					return
 				}
 				if !budget.TryTake() {
 					setStop(experiment.StopBudgetExhausted)
-					cancel()
+					stopProducing()
 					return
 				}
 				if err := limiter.Wait(runCtx); err != nil {
@@ -148,6 +156,7 @@ func (p *Pool) Run(ctx context.Context, arrivals []Arrival, limiter *StartLimite
 				results <- poolResult{sample: sample, err: err}
 				if err != nil {
 					setStop(experiment.StopExecutionFailure)
+					stopProducing()
 					cancel()
 					return
 				}
@@ -160,6 +169,8 @@ func (p *Pool) Run(ctx context.Context, arrivals []Arrival, limiter *StartLimite
 		for _, arrival := range arrivals {
 			select {
 			case jobs <- arrival:
+			case <-stopJobs:
+				return
 			case <-runCtx.Done():
 				return
 			}
