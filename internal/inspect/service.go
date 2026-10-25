@@ -49,6 +49,20 @@ type Result struct {
 	Redirects  httpmeasure.RedirectResult  `json:"redirects"`
 }
 
+// SchemaVersion identifies the standalone inspect JSON contract.
+const SchemaVersion = "sloth.inspect/v1"
+
+// Document is the versioned machine-readable inspect output.
+type Document struct {
+	SchemaVersion string `json:"schema_version"`
+	Result        Result `json:"result"`
+}
+
+// NewDocument wraps a result in the current inspect schema.
+func NewDocument(result Result) Document {
+	return Document{SchemaVersion: SchemaVersion, Result: result}
+}
+
 // Connection contains selected-connection facts, not an inference from the
 // configured transport profile.
 type Connection struct {

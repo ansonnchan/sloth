@@ -22,6 +22,7 @@ func newInspectCommand(stdout, stderr io.Writer, service *inspect.Service) *cobr
 	var bodyFile string
 	var colorMode = string(options.Color)
 	var ascii bool
+	var jsonOutput bool
 
 	command := &cobra.Command{
 		Use:   "inspect URL",
@@ -61,12 +62,20 @@ func newInspectCommand(stdout, stderr io.Writer, service *inspect.Service) *cobr
 				return err
 			}
 
-			result, err := service.Inspect(command.Context(), spec)
-			if err != nil {
+			result, inspectErr := service.Inspect(command.Context(), spec)
+			if jsonOutput {
+				if err := (Output{Data: stdout, Diagnostics: stderr}).WriteJSON(inspect.NewDocument(result)); err != nil {
+					return fmt.Errorf("write inspect JSON: %w", err)
+				}
+			}
+			if inspectErr != nil {
 				if result.Outcome.Error != nil {
 					return result.Outcome.Error
 				}
-				return err
+				return inspectErr
+			}
+			if jsonOutput {
+				return nil
 			}
 			return render.Inspect(stdout, render.NewInspectView(result), render.Options{
 				Width: terminalWidth(),
@@ -86,6 +95,7 @@ func newInspectCommand(stdout, stderr io.Writer, service *inspect.Service) *cobr
 	flags.Int64Var(&options.BodyLimit, "body-limit", options.BodyLimit, "maximum response-body bytes")
 	flags.StringVar(&colorMode, "color", colorMode, "color mode: auto, always, or never")
 	flags.BoolVar(&ascii, "ascii", false, "use ASCII-only terminal output")
+	flags.BoolVar(&jsonOutput, "json", false, "write one machine-readable JSON document")
 	flags.BoolVar(&options.AllowHighLoad, "allow-high-load", false, "acknowledge settings above normal safety limits")
 	flags.BoolVar(&options.AllowUnsafeMethods, "allow-unsafe-methods", false, "acknowledge a method that may change server state")
 	return command

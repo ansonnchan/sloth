@@ -89,6 +89,8 @@ Shared runtime defaults are documented in [Configuration](docs/configuration.md)
 Automation-facing streams and statuses are documented in the
 [CLI contract](docs/cli-contract.md).
 Version injection is documented in [Build metadata](docs/builds.md).
+The standalone inspect machine format is documented in
+[Inspect JSON](docs/inspect-json.md).
 
 ## Branch and release flow
 
@@ -146,6 +148,7 @@ Run the current CLI from the repository root:
 go run ./cmd/sloth --help
 go run ./cmd/sloth --version
 go run ./cmd/sloth inspect https://example.com --color never
+go run ./cmd/sloth inspect https://example.com --json
 ```
 
 Verification commands:

@@ -119,6 +119,107 @@ func TestServiceDoesNotRetainBodies(t *testing.T) {
 	}
 }
 
+func TestServiceObservesReusedConnection(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(writer, "ok")
+	}))
+	defer server.Close()
+
+	factory := func(settings ClientSettings) (ClientSession, error) {
+		owner, err := httpmeasure.NewTransport(httpmeasure.TransportReuse)
+		if err != nil {
+			return ClientSession{}, err
+		}
+		client := owner.Client(settings.Timeout)
+		client.CheckRedirect = settings.CheckRedirect
+		response, err := client.Get(server.URL + "/warmup")
+		if err != nil {
+			owner.Close()
+			return ClientSession{}, err
+		}
+		_, readErr := io.Copy(io.Discard, response.Body)
+		closeErr := response.Body.Close()
+		if readErr != nil || closeErr != nil {
+			owner.Close()
+			return ClientSession{}, errors.Join(readErr, closeErr)
+		}
+		return ClientSession{Client: client, Close: owner.Close}, nil
+	}
+	spec := mustSpec(t, httpmeasure.RequestSpecInput{
+		Target:  server.URL + "/inspect",
+		Method:  http.MethodGet,
+		Options: defaultRequestOptions(),
+	})
+
+	result, err := NewService(factory).Inspect(context.Background(), spec)
+	if err != nil {
+		t.Fatalf("Inspect() error = %v", err)
+	}
+	if !result.Connection.Observed || !result.Connection.Reused {
+		t.Fatalf("connection = %#v, want observed reuse", result.Connection)
+	}
+	if result.Timings.Connect.Reason() != httpmeasure.UnavailableConnectionReuse || result.Timings.TLS.Reason() != httpmeasure.UnavailableConnectionReuse {
+		t.Fatalf("reuse setup timings = connect %q TLS %q", result.Timings.Connect.Reason(), result.Timings.TLS.Reason())
+	}
+}
+
+func TestServiceSupportsHTTP2(t *testing.T) {
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(writer, "h2")
+	}))
+	server.EnableHTTP2 = true
+	server.StartTLS()
+	defer server.Close()
+
+	factory := func(settings ClientSettings) (ClientSession, error) {
+		client := server.Client()
+		client.Timeout = settings.Timeout
+		client.CheckRedirect = settings.CheckRedirect
+		return ClientSession{Client: client, Close: client.CloseIdleConnections}, nil
+	}
+	spec := mustSpec(t, httpmeasure.RequestSpecInput{
+		Target:  server.URL,
+		Method:  http.MethodGet,
+		Options: defaultRequestOptions(),
+	})
+
+	result, err := NewService(factory).Inspect(context.Background(), spec)
+	if err != nil {
+		t.Fatalf("Inspect() error = %v", err)
+	}
+	if result.Protocol != "HTTP/2.0" || result.Outcome.Category != httpmeasure.OutcomeSuccess {
+		t.Fatalf("protocol/outcome = (%q, %q)", result.Protocol, result.Outcome.Category)
+	}
+}
+
+func TestServiceTimingRelationshipsForDelayedHeadersAndBody(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		time.Sleep(5 * time.Millisecond)
+		flusher := writer.(http.Flusher)
+		_, _ = io.WriteString(writer, "first")
+		flusher.Flush()
+		time.Sleep(5 * time.Millisecond)
+		_, _ = io.WriteString(writer, "second")
+	}))
+	defer server.Close()
+
+	spec := mustSpec(t, httpmeasure.RequestSpecInput{
+		Target:  server.URL,
+		Method:  http.MethodGet,
+		Options: defaultRequestOptions(),
+	})
+	result, err := NewService(nil).Inspect(context.Background(), spec)
+	if err != nil {
+		t.Fatalf("Inspect() error = %v", err)
+	}
+	total, totalOK := result.Timings.Total.Value()
+	firstByte, firstByteOK := result.Timings.FirstByteWait.Value()
+	body, bodyOK := result.Timings.BodyTransfer.Value()
+	if !totalOK || !firstByteOK || !bodyOK || total < firstByte || total < body || firstByte <= 0 || body <= 0 {
+		t.Fatalf("timing relationships = total (%s, %v), first byte (%s, %v), body (%s, %v)", total, totalOK, firstByte, firstByteOK, body, bodyOK)
+	}
+}
+
 func defaultRequestOptions() httpmeasure.RequestOptions {
 	return httpmeasure.RequestOptions{
 		Timeout:       time.Second,
