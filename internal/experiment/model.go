@@ -123,8 +123,21 @@ type Execution struct {
 // Result preserves warm-up evidence and partial execution separately from the
 // measured samples consumed by statistical aggregation.
 type Result struct {
-	Plan      Plan            `json:"-"`
-	Execution Execution       `json:"execution"`
-	Warmups   WarmupSamples   `json:"warmups"`
-	Measured  MeasuredSamples `json:"measured"`
+	Plan          Plan            `json:"-"`
+	Execution     Execution       `json:"execution"`
+	Warmups       WarmupSamples   `json:"warmups"`
+	WarmupSummary OutcomeSummary  `json:"warmup_summary"`
+	Measured      MeasuredSamples `json:"measured"`
+}
+
+// OutcomeSummary keeps warm-up failures visible without mixing their latency
+// into the measured sample set.
+type OutcomeSummary map[httpmeasure.OutcomeCategory]int
+
+func SummarizeOutcomes(samples WarmupSamples) OutcomeSummary {
+	summary := make(OutcomeSummary)
+	for _, sample := range samples {
+		summary[sample.Outcome.Category]++
+	}
+	return summary
 }

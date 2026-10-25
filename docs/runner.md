@@ -22,3 +22,9 @@ collector drains results from work that had already started. A suite-wide
 request budget is checked before rate admission, so budget exhaustion or
 cancellation cannot launch additional requests. Partial results retain the
 specific stop reason and completed evidence in request-sequence order.
+
+Warm-ups run before measured traffic through the same executor, worker pool,
+limiter, budget, and cancellation path. Their outcomes remain visible in a
+separate summary, but their durations never enter measured percentiles or
+throughput. HTTP-level warm-up failures do not stop the run; cancellation,
+budget exhaustion, or an internal executor failure does.
