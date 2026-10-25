@@ -99,14 +99,15 @@ Exceeding the normal ceiling requires the explicit noninteractive
 estimate includes every experiment and warm-up. Unsafe methods separately
 require `--allow-unsafe-methods`.
 
-## Proposed decisions to ratify in foundation issues
-
 ### D-016 — Response-body cap semantics
 
-Proposed: stream bodies to `io.Discard` up to a centralized cap, record an
-explicit truncated outcome when exceeded, and do not claim connection reuse for
-a connection whose body could not be fully drained. Content-Length is metadata,
-not proof of bytes transferred.
+Response bodies are streamed to `io.Discard` without retention. Sloth reads at
+most one probe byte beyond the configured cap so chunked or streaming bodies
+can be identified as truncated without trusting `Content-Length`. The probe is
+included in transferred-byte evidence. A truncated or otherwise incomplete body
+is closed and is not described as eligible for connection reuse.
+
+## Proposed decisions to ratify in later issues
 
 ### D-017 — Compatibility severity matrix
 

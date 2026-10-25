@@ -75,3 +75,19 @@ dialing, bounded connection and TLS setup timeouts, system TLS verification,
 and explicit HTTP/2 negotiation. The owner closes idle connections when its
 measurement lifecycle ends. Transport state is never shared across experiment
 arms.
+
+## Response bodies
+
+Response bodies are streamed directly to `io.Discard` and closed on every path;
+Sloth does not retain their content. Reads stop at the configured byte limit
+plus one detection byte. That byte is necessary to distinguish an exactly-full
+body from a chunked or streaming body that exceeds the limit, and it is included
+in the transferred-byte count.
+
+Exceeding the limit is a typed `body_limit` outcome. Read errors, early
+disconnects, truncation, and close failures leave the body incomplete and not
+eligible for reuse. A completely drained and successfully closed body is only
+marked reuse-eligible; actual reuse is reported separately from the next
+request's trace observation. Byte counts describe the stream exposed by Go's
+HTTP client, which may be decoded when automatic content decompression applies,
+and never rely on `Content-Length` as proof of transferred bytes.
