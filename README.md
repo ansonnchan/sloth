@@ -145,6 +145,7 @@ Run the current CLI from the repository root:
 ```bash
 go run ./cmd/sloth --help
 go run ./cmd/sloth --version
+go run ./cmd/sloth inspect https://example.com --color never
 ```
 
 Verification commands:
