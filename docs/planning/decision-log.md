@@ -107,6 +107,14 @@ can be identified as truncated without trusting `Content-Length`. The probe is
 included in transferred-byte evidence. A truncated or otherwise incomplete body
 is closed and is not described as eligible for connection reuse.
 
+### D-018 — Connection experiment ordering
+
+Alternate fresh and reused measured samples using a deterministic seeded order
+recorded in the result. This reduces temporal drift without making runs
+irreproducible. Fresh and reused arms own separate transports and connection
+pools. Comparisons require observed connection-state evidence; requested mode
+alone is insufficient.
+
 ## Proposed decisions to ratify in later issues
 
 ### D-017 — Compatibility severity matrix
@@ -115,13 +123,6 @@ Proposed fatal mismatches for gate mode: unreadable schema, target, method,
 experiment semantics, timeout policy, concurrency stage, rate policy, and unsafe
 method mismatch. Descriptive comparison may retain rows for compatible subsets
 while prominently warning about noncomparable sections.
-
-### D-018 — Connection experiment ordering
-
-Proposed: alternate fresh and reused samples using a deterministic seeded order
-recorded in the report. This reduces temporal drift without making runs
-irreproducible. A transport must never be shared between the fresh and reuse
-arms.
 
 ## Explicitly deferred choices
 
