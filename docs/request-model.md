@@ -61,3 +61,17 @@ only the same classified, secret-safe messages as request outcomes.
 Trace timestamps come from `time.Now`, whose elapsed-time operations use its
 monotonic reading while the process is running. Raw timestamps are inputs to
 timing derivation and are not themselves the public timing report.
+
+## Transport ownership
+
+Each measurement arm owns its HTTP transport and connection pool. The default
+and reuse profiles permit keep-alive reuse; the fresh profile disables
+keep-alives so consecutive attempts do not silently share a connection. A
+fresh-profile transport and a reuse-profile transport are always different
+instances.
+
+All profiles use the standard environment proxy policy, dual-stack network
+dialing, bounded connection and TLS setup timeouts, system TLS verification,
+and explicit HTTP/2 negotiation. The owner closes idle connections when its
+measurement lifecycle ends. Transport state is never shared across experiment
+arms.
