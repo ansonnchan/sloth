@@ -69,7 +69,9 @@ jobs:
           cache: true
 
       - name: Test with race detector
-        run: go test -race ./...
+        run: |
+          go test -race ./...
+          go test -race -count=3 ./internal/runner
 
   cross-build:
     name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
