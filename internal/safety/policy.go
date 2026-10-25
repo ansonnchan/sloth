@@ -38,7 +38,7 @@ var (
 		RequestsPerExperiment: 10_000,
 		TotalRequests:         50_000,
 		Rate:                  1_000,
-		Concurrency:           200,
+		Concurrency:           config.AbsoluteConcurrency,
 		Timeout:               5 * time.Minute,
 		BodyLimit:             100 << 20,
 		SampleLimit:           10_000,
