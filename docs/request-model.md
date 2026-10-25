@@ -44,3 +44,20 @@ and are explicitly marked incomplete.
 Internally, classified errors retain their wrapped Go cause for cancellation and
 diagnostic handling. Human and JSON forms contain only stable messages that do
 not embed the original URL or transport error text.
+
+## Raw trace evidence
+
+Each request attempt owns an independent trace collector. It records request
+start, response-header return, body completion, DNS callbacks, every connection
+attempt, TLS callbacks, selected-connection reuse and idle state, request-write
+callbacks, first response byte, and the protocol reported by the response.
+
+Starts and completions remain separate ordered observations. Sloth does not
+assume that a callback happens exactly once or has a matching counterpart;
+multiple address attempts, overlapping work, missing hooks, and terminal errors
+are valid raw records. Callback errors retain their internal causes but expose
+only the same classified, secret-safe messages as request outcomes.
+
+Trace timestamps come from `time.Now`, whose elapsed-time operations use its
+monotonic reading while the process is running. Raw timestamps are inputs to
+timing derivation and are not themselves the public timing report.
