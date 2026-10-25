@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ansonnchan/sloth/internal/config"
+	"github.com/ansonnchan/sloth/internal/safety"
 )
 
 // ExitCode is Sloth's stable process-exit contract.
@@ -63,8 +64,9 @@ func ExitCodeFor(err error) ExitCode {
 	}
 
 	var validationErr *config.ValidationError
+	var policyErr *safety.PolicyError
 	var commandUsageErr *usageError
-	if errors.As(err, &validationErr) || errors.As(err, &commandUsageErr) {
+	if errors.As(err, &validationErr) || errors.As(err, &policyErr) || errors.As(err, &commandUsageErr) {
 		return ExitUsage
 	}
 	return ExitRuntime

@@ -2,16 +2,24 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"io"
 
 	"github.com/ansonnchan/sloth/internal/buildinfo"
+	"github.com/ansonnchan/sloth/internal/inspect"
 	"github.com/spf13/cobra"
 )
 
 // Run executes the Sloth command and returns a stable process status.
 func Run(args []string, stdout, stderr io.Writer, info buildinfo.Info) int {
+	return RunContext(context.Background(), args, stdout, stderr, info)
+}
+
+// RunContext executes Sloth with caller-controlled cancellation.
+func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer, info buildinfo.Info) int {
 	command := newRootCommand(stdout, stderr, info)
+	command.SetContext(ctx)
 	return int(execute(command, args, stderr))
 }
 
@@ -45,5 +53,6 @@ func newRootCommand(stdout, stderr io.Writer, info buildinfo.Info) *cobra.Comman
 	command.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
 		return invalidUsage(err)
 	})
+	command.AddCommand(newInspectCommand(stdout, stderr, inspect.NewService(nil)))
 	return command
 }

@@ -20,3 +20,33 @@ Sloth keeps machine-readable data separate from human diagnostics:
 
 These values are public automation behavior. New error categories must map to
 one of these codes unless a separately reviewed contract change is required.
+
+## Inspect command
+
+`sloth inspect URL` performs one bounded request. It supports:
+
+- `--method` / `-X` for GET, HEAD, POST, PUT, PATCH, or DELETE;
+- repeatable `--header` / `-H` values in `Name: Value` form;
+- `--body-file` for a replayable request body;
+- `--timeout` and `--body-limit` bounds;
+- `--follow-redirects` with `--redirect-limit`;
+- `--json` for machine-readable output;
+- `--color auto|always|never` and `--ascii` presentation controls; and
+- the `--allow-unsafe-methods` and `--allow-high-load` acknowledgements.
+
+Validation and safety policy run before Sloth opens a body file or contacts the
+target. Ctrl+C cancels the in-flight request and exits with status 130. HTTP
+4xx/5xx responses remain successful measurements; timeouts, transport errors,
+body-limit failures, and cancellation use their documented nonzero statuses.
+
+Human output includes the method, redacted endpoint, status, negotiated
+protocol, observed connection reuse, response bytes, total duration, each
+timing phase, and exactly one bounded interpretation. Missing or inapplicable
+phases render as `N/A` with a reason. The first-byte interval is described as a
+client-observed wait that can include server work, network, queueing, and
+upstream delay—not as server execution time.
+
+`inspect --json` writes one ANSI-free `sloth.inspect/v1` document to stdout.
+Once measurement has begun, runtime and interruption outcomes still produce a
+document before the process returns its nonzero exit status; validation failures
+do not. See [Inspect JSON](inspect-json.md) for the field and nullability rules.
