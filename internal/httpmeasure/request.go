@@ -76,10 +76,19 @@ type TargetIdentity struct {
 // RequestMetadata is safe to render or persist. Runtime request data is never
 // embedded in this value.
 type RequestMetadata struct {
-	Method  string         `json:"method"`
-	Target  TargetIdentity `json:"target"`
-	Headers http.Header    `json:"headers,omitempty"`
-	Options RequestOptions `json:"options"`
+	Method  string                `json:"method"`
+	Target  TargetIdentity        `json:"target"`
+	Headers http.Header           `json:"headers,omitempty"`
+	Options RequestOptionMetadata `json:"options"`
+}
+
+// RequestOptionMetadata is the unit-explicit persisted request policy.
+type RequestOptionMetadata struct {
+	TimeoutMillis      int64 `json:"timeout_ms"`
+	FollowRedirects    bool  `json:"follow_redirects"`
+	RedirectLimit      int   `json:"redirect_limit"`
+	BodyLimitBytes     int64 `json:"body_limit_bytes"`
+	AllowUnsafeMethods bool  `json:"allow_unsafe_methods"`
 }
 
 // NewRequestSpec constructs a runtime request specification and its safe
@@ -146,7 +155,13 @@ func (s RequestSpec) Metadata() RequestMetadata {
 		Method:  s.method,
 		Target:  s.Identity(),
 		Headers: redactHeaders(s.headers, s.secretHeaderNames),
-		Options: s.options,
+		Options: RequestOptionMetadata{
+			TimeoutMillis:      s.options.Timeout.Milliseconds(),
+			FollowRedirects:    s.options.FollowRedirects,
+			RedirectLimit:      s.options.RedirectLimit,
+			BodyLimitBytes:     s.options.BodyLimit,
+			AllowUnsafeMethods: s.options.AllowUnsafeMethods,
+		},
 	}
 }
 

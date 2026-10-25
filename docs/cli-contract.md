@@ -30,6 +30,7 @@ one of these codes unless a separately reviewed contract change is required.
 - `--body-file` for a replayable request body;
 - `--timeout` and `--body-limit` bounds;
 - `--follow-redirects` with `--redirect-limit`;
+- `--json` for machine-readable output;
 - `--color auto|always|never` and `--ascii` presentation controls; and
 - the `--allow-unsafe-methods` and `--allow-high-load` acknowledgements.
 
@@ -44,3 +45,8 @@ timing phase, and exactly one bounded interpretation. Missing or inapplicable
 phases render as `N/A` with a reason. The first-byte interval is described as a
 client-observed wait that can include server work, network, queueing, and
 upstream delay—not as server execution time.
+
+`inspect --json` writes one ANSI-free `sloth.inspect/v1` document to stdout.
+Once measurement has begun, runtime and interruption outcomes still produce a
+document before the process returns its nonzero exit status; validation failures
+do not. See [Inspect JSON](inspect-json.md) for the field and nullability rules.
