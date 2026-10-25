@@ -28,3 +28,9 @@ limiter, budget, and cancellation path. Their outcomes remain visible in a
 separate summary, but their durations never enter measured percentiles or
 throughput. HTTP-level warm-up failures do not stop the run; cancellation,
 budget exhaustion, or an internal executor failure does.
+
+The baseline experiment runs with one worker and an isolated reusable transport.
+It attempts the configured measured count after warm-up unless cancellation,
+budget exhaustion, or an internal runner failure stops it. HTTP errors, body
+limits, and timeouts are measured outcomes rather than runner failures, so their
+valid timing and response evidence remains in the baseline aggregate.
