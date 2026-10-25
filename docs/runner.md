@@ -41,3 +41,9 @@ result, while both arms share request configuration, timeout, and the suite-wide
 start limiter. A comparison is sufficient only when every fresh sample observes
 a new connection and the reused arm observes reuse. HTTP/2 multiplexing and
 proxy behavior remain explicit caveats; configured mode alone is not evidence.
+
+Concurrency stages always begin at one and include the requested maximum.
+Default landmarks at five and ten are retained when they do not exceed that
+maximum. For example, maximums of 3, 7, 10, and 15 produce `[1,3]`, `[1,5,7]`,
+`[1,5,10]`, and `[1,5,10,15]`. Values above the absolute concurrency ceiling
+are rejected rather than silently clamped.

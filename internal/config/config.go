@@ -20,6 +20,7 @@ const (
 	DefaultBodyLimit       = int64(1 << 20)
 	DefaultIncludeSamples  = false
 	DefaultSampleLimit     = 1_000
+	AbsoluteConcurrency    = 200
 )
 
 // ColorMode controls whether human-readable output uses ANSI color.
