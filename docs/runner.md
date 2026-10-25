@@ -47,3 +47,10 @@ Default landmarks at five and ten are retained when they do not exceed that
 maximum. For example, maximums of 3, 7, 10, and 15 produce `[1,3]`, `[1,5,7]`,
 `[1,5,10]`, and `[1,5,10,15]`. Values above the absolute concurrency ceiling
 are rejected rather than silently clamped.
+
+Each concurrency stage has a complete one-stage configuration snapshot, an
+isolated reusable transport, and its own warm-up, measured samples, and
+aggregate. Stages run in ascending order but share the suite limiter and request
+budget, so worker count cannot change the configured aggregate start rate.
+Reports record achieved peak and time-weighted in-flight concurrency; cancelled
+runs retain completed and partial stages in configured order.

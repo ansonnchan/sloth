@@ -42,9 +42,8 @@ func RunBaseline(
 			return ExperimentReport{}, err
 		}
 		closeTransport = owner.Close
-		client := owner.Client(effective.Timeout())
 		factory = func(settings inspect.ClientSettings) (inspect.ClientSession, error) {
-			client.Timeout = settings.Timeout
+			client := owner.Client(settings.Timeout)
 			client.CheckRedirect = settings.CheckRedirect
 			return inspect.ClientSession{Client: client, Close: func() {}}, nil
 		}

@@ -22,22 +22,26 @@ func RunExperiment(
 		clock = realClock{}
 	}
 	result := experiment.Result{Plan: plan}
-	result.Execution.StartedAt = clock.Now()
 	pool, err := NewPool(plan.Workers(), executor, clock)
 	if err != nil {
 		return result, err
 	}
 
+	result.WarmupExecution.StartedAt = clock.Now()
 	warmupReport, err := runPhase(ctx, pool, plan.Warmups(), plan.Rate(), limiter, budget, clock)
 	result.Warmups = experiment.WarmupSamples(warmupReport.Samples)
 	setExperimentID(result.Warmups, plan.ID())
 	result.WarmupSummary = experiment.SummarizeOutcomes(result.Warmups)
-	applyPoolReport(&result.Execution, warmupReport, startInterval(plan.Rate()))
+	applyPoolReport(&result.WarmupExecution, warmupReport, startInterval(plan.Rate()))
+	result.WarmupExecution.FinishedAt = clock.Now()
 	if err != nil || warmupReport.StopReason != experiment.StopNone {
+		result.Execution.Interrupted = true
+		result.Execution.StopReason = warmupReport.StopReason
 		result.Execution.FinishedAt = clock.Now()
 		return result, err
 	}
 
+	result.Execution.StartedAt = clock.Now()
 	measuredReport, err := runPhase(ctx, pool, plan.Requests(), plan.Rate(), limiter, budget, clock)
 	result.Measured = experiment.MeasuredSamples(measuredReport.Samples)
 	setExperimentID(result.Measured, plan.ID())

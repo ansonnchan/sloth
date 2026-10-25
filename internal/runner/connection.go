@@ -57,12 +57,12 @@ func RunConnectionExperiment(
 		clock = realClock{}
 	}
 
-	freshFactory, closeFresh, err := connectionFactory(effective, httpmeasure.TransportFresh, options.FreshFactory)
+	freshFactory, closeFresh, err := connectionFactory(httpmeasure.TransportFresh, options.FreshFactory)
 	if err != nil {
 		return report, err
 	}
 	defer closeFresh()
-	reuseFactory, closeReuse, err := connectionFactory(effective, httpmeasure.TransportReuse, options.ReuseFactory)
+	reuseFactory, closeReuse, err := connectionFactory(httpmeasure.TransportReuse, options.ReuseFactory)
 	if err != nil {
 		return report, err
 	}
@@ -106,7 +106,7 @@ func RunConnectionExperiment(
 	return report, runErr
 }
 
-func connectionFactory(effective config.Effective, profile httpmeasure.TransportProfile, injected inspect.ClientFactory) (inspect.ClientFactory, func(), error) {
+func connectionFactory(profile httpmeasure.TransportProfile, injected inspect.ClientFactory) (inspect.ClientFactory, func(), error) {
 	if injected != nil {
 		return injected, func() {}, nil
 	}
@@ -114,9 +114,8 @@ func connectionFactory(effective config.Effective, profile httpmeasure.Transport
 	if err != nil {
 		return nil, nil, err
 	}
-	client := owner.Client(effective.Timeout())
 	factory := func(settings inspect.ClientSettings) (inspect.ClientSession, error) {
-		client.Timeout = settings.Timeout
+		client := owner.Client(settings.Timeout)
 		client.CheckRedirect = settings.CheckRedirect
 		return inspect.ClientSession{Client: client, Close: func() {}}, nil
 	}
