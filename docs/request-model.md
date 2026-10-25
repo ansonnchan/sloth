@@ -91,3 +91,19 @@ marked reuse-eligible; actual reuse is reported separately from the next
 request's trace observation. Byte counts describe the stream exposed by Go's
 HTTP client, which may be decoded when automatic content decompression applies,
 and never rely on `Content-Length` as proof of transferred bytes.
+
+## Redirects
+
+The default policy returns the first 3xx response as a measured response and
+does not follow its `Location`. Explicit opt-in follows at most the configured
+hop limit, which remains subject to the absolute safety ceiling.
+
+Every proposed hop records its status, resulting method, redacted source and
+target identities, whether the origin changed, and whether Sloth followed it.
+Go's standard redirect method rules apply, including conversion of POST to GET
+for 301, 302, and 303 responses and body replay requirements for 307 and 308.
+
+When scheme, hostname, or effective port changes, Sloth removes authorization,
+proxy authorization, cookies, referer, and secret-like custom headers before
+the request can be sent. Redirect results retain query keys but never query
+values, including for the final target identity.
