@@ -21,8 +21,8 @@ commands and reports use the same values.
 | Include individual samples | No |
 | Included sample limit | 1,000 |
 
-These values describe configuration only. SH-04 defines the separate normal
-and absolute safety ceilings that constrain overrides.
+These values describe configuration only. The separate normal and absolute
+safety ceilings constrain overrides.
 
 The serializable effective configuration contains no request URL, headers,
 credentials, cookies, or request body. Durations and byte limits use explicit
@@ -63,3 +63,7 @@ Exceeding a normal ceiling requires `--allow-high-load`. Absolute ceilings
 cannot be bypassed. `POST`, `PUT`, `PATCH`, and `DELETE` require
 `--allow-unsafe-methods`; the warning includes the complete planned request
 budget so the acknowledgement is informed and noninteractive.
+
+The single-request `inspect` workflow contributes exactly one measured request
+to its traffic budget. Redirects are bounded separately because each followed
+hop can contact another origin.
