@@ -8,6 +8,7 @@ import (
 	"github.com/ansonnchan/sloth/internal/config"
 	"github.com/ansonnchan/sloth/internal/diagnose"
 	"github.com/ansonnchan/sloth/internal/httpmeasure"
+	"github.com/ansonnchan/sloth/internal/render"
 	"github.com/ansonnchan/sloth/internal/safety"
 	"github.com/spf13/cobra"
 )
@@ -17,6 +18,9 @@ func newDiagnoseCommand(stdout, stderr io.Writer) *cobra.Command {
 	var headers []string
 	var bodyFile string
 	var quiet bool
+	var colorMode = string(options.Color)
+	var ascii bool
+	var jsonOutput bool
 
 	command := &cobra.Command{
 		Use:   "diagnose URL",
@@ -25,6 +29,7 @@ func newDiagnoseCommand(stdout, stderr io.Writer) *cobra.Command {
 			return invalidUsage(cobra.ExactArgs(1)(command, args))
 		},
 		RunE: func(command *cobra.Command, args []string) error {
+			options.Color = config.ColorMode(colorMode)
 			input := config.Input{Target: args[0], Headers: headers, Options: options}
 			if err := config.Validate(input); err != nil {
 				return err
@@ -59,12 +64,25 @@ func newDiagnoseCommand(stdout, stderr io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			var progressErr error
 			service := diagnose.NewService(func(stage diagnose.Stage) {
-				_ = output.Progressf("Running %s...\n", stage)
+				if progressErr == nil {
+					progressErr = output.Progressf("Running %s...\n", stage)
+				}
 			})
 			result, runErr := service.Run(command.Context(), spec, effective)
-			if err := writeDiagnoseSummary(stdout, result); err != nil {
-				return errors.Join(runErr, fmt.Errorf("write diagnostic summary: %w", err))
+			runErr = errors.Join(runErr, progressErr)
+			document := diagnose.NewDocument(result, effective, budget)
+			var outputErr error
+			if jsonOutput {
+				outputErr = output.WriteJSON(document)
+			} else {
+				outputErr = render.Diagnose(stdout, document, render.Options{
+					Width: terminalWidth(), Color: useColor(options.Color, stdout), ASCII: ascii,
+				})
+			}
+			if outputErr != nil {
+				return errors.Join(runErr, fmt.Errorf("write diagnostic report: %w", outputErr))
 			}
 			return runErr
 		},
@@ -82,20 +100,11 @@ func newDiagnoseCommand(stdout, stderr io.Writer) *cobra.Command {
 	flags.BoolVar(&options.FollowRedirects, "follow-redirects", options.FollowRedirects, "follow bounded HTTP redirects")
 	flags.IntVar(&options.RedirectLimit, "redirect-limit", options.RedirectLimit, "maximum redirect hops")
 	flags.Int64Var(&options.BodyLimit, "body-limit", options.BodyLimit, "maximum response-body bytes per request")
+	flags.StringVar(&colorMode, "color", colorMode, "color mode: auto, always, or never")
+	flags.BoolVar(&ascii, "ascii", false, "use ASCII-only terminal output")
+	flags.BoolVar(&jsonOutput, "json", false, "write one machine-readable JSON document")
 	flags.BoolVar(&quiet, "quiet", false, "suppress plan and progress output")
 	flags.BoolVar(&options.AllowHighLoad, "allow-high-load", false, "acknowledge settings above normal safety limits")
 	flags.BoolVar(&options.AllowUnsafeMethods, "allow-unsafe-methods", false, "acknowledge a method that may change server state")
 	return command
-}
-
-func writeDiagnoseSummary(writer io.Writer, result diagnose.Result) error {
-	if _, err := fmt.Fprintf(writer, "Diagnosis: %d finding(s), rules %s\n", len(result.Diagnosis.Findings), result.Diagnosis.RuleVersion); err != nil {
-		return err
-	}
-	for _, finding := range result.Diagnosis.Findings {
-		if _, err := fmt.Fprintf(writer, "- %s [%s confidence]: %s\n", finding.Code, finding.Confidence, finding.Observation); err != nil {
-			return err
-		}
-	}
-	return nil
 }

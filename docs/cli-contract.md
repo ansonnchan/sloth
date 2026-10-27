@@ -65,3 +65,17 @@ request count, and minimum schedule time to stderr. The suite shares one rate
 limiter and one hard request budget. `--quiet` suppresses plan and progress
 lines. Ctrl+C stops scheduling, retains and diagnoses partial evidence, prints
 the partial summary, and exits with status 130.
+
+Human output contains aggregate tables for baseline, connection, and concurrency
+arms; each row includes sample count, p50, p95, p99, errors, offered and achieved
+rates, and actual time-weighted concurrency. Findings keep observations,
+possible causes, recommendations, confidence, and typed evidence visibly
+separate, followed by limitations and next steps. Noninteractive output is
+static and uses no cursor-control animation.
+
+`diagnose --json` writes one ANSI-free `sloth.diagnose/v1` aggregate document to
+stdout. Plan and progress lines remain on stderr, or are suppressed with
+`--quiet`; they never contaminate the JSON document. The command does not expose
+request or response bodies, headers, or raw samples. See
+[Diagnose JSON](diagnose-json.md) for the transient command-output contract; the
+persisted report schema is introduced separately by the export milestone.

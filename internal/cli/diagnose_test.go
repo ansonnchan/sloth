@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -42,8 +43,36 @@ func TestDiagnoseCommandRunsStandardSuiteAndShowsPlanFirst(t *testing.T) {
 			t.Fatalf("stderr = %q, want %q", stderr.String(), content)
 		}
 	}
-	if !strings.Contains(stdout.String(), "Diagnosis:") {
+	if !strings.Contains(stdout.String(), "Sloth diagnosis") {
 		t.Fatalf("stdout = %q", stdout.String())
+	}
+}
+
+func TestDiagnoseJSONKeepsProgressOffStdout(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+	var stdout, stderr bytes.Buffer
+	code := Run([]string{
+		"diagnose", "--json", "--color", "always", "--requests", "10", "--warmups", "0",
+		"--rate", "1000", "--concurrency", "1,2", "--allow-high-load", server.URL,
+	}, &stdout, &stderr, buildinfo.Info{Version: "test"})
+	if code != int(ExitSuccess) {
+		t.Fatalf("Run() = %d, stderr = %q", code, stderr.String())
+	}
+	var document struct {
+		SchemaVersion string `json:"schema_version"`
+		Experiments   []any  `json:"experiments"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &document); err != nil {
+		t.Fatalf("JSON = %q: %v", stdout.String(), err)
+	}
+	if document.SchemaVersion != "sloth.diagnose/v1" || len(document.Experiments) != 5 {
+		t.Fatalf("document = %+v", document)
+	}
+	if strings.Contains(stdout.String(), "Running ") || strings.Contains(stdout.String(), "\x1b[") || !strings.Contains(stderr.String(), "Running baseline") {
+		t.Fatalf("streams = (%q, %q)", stdout.String(), stderr.String())
 	}
 }
 
