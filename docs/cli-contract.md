@@ -50,3 +50,32 @@ upstream delay—not as server execution time.
 Once measurement has begun, runtime and interruption outcomes still produce a
 document before the process returns its nonzero exit status; validation failures
 do not. See [Inspect JSON](inspect-json.md) for the field and nullability rules.
+
+## Diagnose command
+
+`sloth diagnose URL` runs the standard baseline, alternating fresh/reused
+connection, and configured concurrency experiments through the six-rule
+diagnostic engine. Defaults are 100 measured requests and five warm-ups per arm,
+five aggregate request starts per second, and concurrency stages 1, 5, and 10.
+The default suite therefore contains 600 measured requests plus 30 warm-ups.
+
+Before opening a body file or contacting the target, Sloth validates all flags,
+enforces the safety policy, and writes the effective configuration, planned
+request count, and minimum schedule time to stderr. The suite shares one rate
+limiter and one hard request budget. `--quiet` suppresses plan and progress
+lines. Ctrl+C stops scheduling, retains and diagnoses partial evidence, prints
+the partial summary, and exits with status 130.
+
+Human output contains aggregate tables for baseline, connection, and concurrency
+arms; each row includes sample count, p50, p95, p99, errors, offered and achieved
+rates, and actual time-weighted concurrency. Findings keep observations,
+possible causes, recommendations, confidence, and typed evidence visibly
+separate, followed by limitations and next steps. Noninteractive output is
+static and uses no cursor-control animation.
+
+`diagnose --json` writes one ANSI-free `sloth.diagnose/v1` aggregate document to
+stdout. Plan and progress lines remain on stderr, or are suppressed with
+`--quiet`; they never contaminate the JSON document. The command does not expose
+request or response bodies, headers, or raw samples. See
+[Diagnose JSON](diagnose-json.md) for the transient command-output contract; the
+persisted report schema is introduced separately by the export milestone.
