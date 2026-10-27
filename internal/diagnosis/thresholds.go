@@ -28,6 +28,7 @@ type Thresholds struct {
 	SchedulingShare      float64
 	WarningErrorRate     float64
 	HighErrorRate        float64
+	ClientErrorRate      float64
 }
 
 // DefaultThresholds returns a fresh copy of the v1 diagnostic policy.
@@ -54,5 +55,6 @@ func DefaultThresholds() Thresholds {
 		SchedulingShare:      0.20,
 		WarningErrorRate:     0.01,
 		HighErrorRate:        0.05,
+		ClientErrorRate:      0.10,
 	}
 }

@@ -38,6 +38,7 @@ elapsed time.
 | Scheduling-delay share | 0.20 | scheduling delay / total latency ratio |
 | Warning error rate | 0.01 | errors / attempted ratio |
 | High error rate | 0.05 | errors / attempted ratio |
+| HTTP 4xx rate | 0.10 | 4xx responses / non-cancelled attempts |
 
 Changing a value or its interpretation requires a diagnostic rule-version
 change and updated boundary tests. Confidence is an evidence-quality label, not
@@ -98,3 +99,12 @@ offered-versus-achieved shortfall at 20% instead produces a client-pressure
 finding and lowers confidence in endpoint interpretation. Evidence lists
 offered rate, achieved rate, actual concurrency, p50, p95, successes, errors,
 and scheduling delay for every stage.
+
+## `ERROR_RATE`
+
+This rule evaluates timeouts, transport failures, HTTP 5xx responses, and HTTP
+4xx responses as separate classes. Timeouts, transport failures, and 5xx cross
+at 1%; non-5xx classes become high severity at 5%. Because 4xx commonly reflects
+the request rather than endpoint availability, it uses a separate 10% policy
+and does not become high severity by rate alone. User cancellation is reported
+but excluded from the denominator and never treated as an endpoint error.
