@@ -29,6 +29,9 @@ type BuildInput struct {
 }
 
 func Build(input BuildInput) (Report, error) {
+	if input.Configuration.IncludeSamples && (input.Configuration.SampleLimit <= 0 || input.Configuration.SampleLimit > MaxExportedSamples) {
+		return Report{}, fmt.Errorf("sample limit must be between 1 and %d", MaxExportedSamples)
+	}
 	runID := input.RunID
 	if runID == "" {
 		var err error
@@ -59,6 +62,10 @@ func Build(input BuildInput) (Report, error) {
 		Diagnostics:   append([]diagnosis.Finding(nil), input.Result.Diagnosis.Findings...),
 		Limitations:   []string{},
 	}
+	if input.Configuration.IncludeSamples {
+		report.SampleExport = &SampleExport{Limit: input.Configuration.SampleLimit}
+		report.Samples = []Sample{}
+	}
 
 	appendExperiment := func(result runner.ExperimentReport) {
 		if result.Result.Plan.ID() == "" && result.Aggregate.Outcomes.Attempted == 0 {
@@ -71,6 +78,7 @@ func Build(input BuildInput) (Report, error) {
 			report.Limitations = appendUnique(report.Limitations, experimentReport.ID+": "+limitation)
 		}
 		updateRunBounds(&report.Run, result.Result.Execution)
+		appendSamples(&report, result)
 	}
 	appendExperiment(input.Result.Suite.Baseline)
 	appendExperiment(input.Result.Suite.Connection.Fresh)
@@ -96,6 +104,10 @@ func Build(input BuildInput) (Report, error) {
 	}
 	if report.Overall.WarmupOutcomes == nil {
 		report.Overall.WarmupOutcomes = map[string]int{}
+	}
+	if report.SampleExport != nil {
+		report.SampleExport.Included = len(report.Samples)
+		report.SampleExport.Truncated = report.SampleExport.Included < report.SampleExport.Available
 	}
 	return report, nil
 }
@@ -235,4 +247,49 @@ func appendUnique(values []string, candidate string) []string {
 		}
 	}
 	return append(values, candidate)
+}
+
+func appendSamples(destination *Report, source runner.ExperimentReport) {
+	if destination.SampleExport == nil {
+		return
+	}
+	destination.SampleExport.Available += len(source.Result.Measured)
+	for _, value := range source.Result.Measured {
+		if len(destination.Samples) >= destination.SampleExport.Limit {
+			return
+		}
+		destination.Samples = append(destination.Samples, sample(value))
+	}
+}
+
+func sample(value experiment.Sample) Sample {
+	var statusCode *int
+	if value.StatusCode != 0 {
+		code := value.StatusCode
+		statusCode = &code
+	}
+	return Sample{
+		ExperimentID: value.ExperimentID, Sequence: value.Sequence,
+		PlannedStart: value.PlannedStart.UTC(), ActualStart: value.ActualStart.UTC(), FinishedAt: value.FinishedAt.UTC(),
+		SchedulingDelayMillis: milliseconds(value.SchedulingDelay()),
+		Timings: SampleTimings{
+			Total: sampleDuration(value.Timings.Total), DNS: sampleDuration(value.Timings.DNS),
+			Connect: sampleDuration(value.Timings.Connect), TLS: sampleDuration(value.Timings.TLS),
+			RequestWrite: sampleDuration(value.Timings.RequestWrite), FirstByteWait: sampleDuration(value.Timings.FirstByteWait),
+			BodyTransfer: sampleDuration(value.Timings.BodyTransfer),
+		},
+		Outcome: SampleOutcome{
+			Category: value.Outcome.Category, FailurePhase: value.Outcome.FailurePhase,
+			ResponseReceived: value.Outcome.ResponseReceived, Complete: value.Outcome.Complete,
+		},
+		Connection: value.Connection, Protocol: value.Protocol, StatusCode: statusCode, ResponseBytes: value.ResponseBytes,
+	}
+}
+
+func sampleDuration(value httpmeasure.PhaseDuration) SampleDuration {
+	duration, available := value.Value()
+	if !available {
+		return SampleDuration{UnavailableReason: value.Reason()}
+	}
+	return SampleDuration{DurationMillis: durationPointer(duration)}
 }

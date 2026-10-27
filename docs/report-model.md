@@ -25,5 +25,16 @@ per experiment.
 
 Every serialized duration field names its unit (`_ms`). Unavailable statistics
 use JSON `null`; a measured zero remains numeric zero. The default report contains
-aggregates and diagnostics only. Optional bounded samples are added by the
-sample-export contract without changing these aggregate definitions.
+aggregates and diagnostics only.
+
+## Optional samples
+
+`sloth export --include-samples` adds at most `--sample-limit` measured samples;
+the default limit is 1,000 and the hard maximum is 10,000. `sample_export`
+records how many samples were available and included and whether the array was
+truncated. The complete serialized report is also capped at 16 MiB.
+
+Samples contain experiment identity, sequence, UTC scheduling timestamps,
+millisecond phase durations, outcome classification, observed connection state,
+protocol, status, and byte count. They cannot represent URLs, headers, bodies,
+or underlying error messages. Warm-up samples are never exported.

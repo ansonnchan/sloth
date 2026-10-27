@@ -101,3 +101,74 @@ func TestBuildGeneratesRunIDAndBoundedEnvironment(t *testing.T) {
 		t.Fatalf("run/environment = %+v/%+v", value.Run, value.Environment)
 	}
 }
+
+func TestBuildIncludesOnlyBoundedPrivacySafeSamplesWhenRequested(t *testing.T) {
+	started := time.Date(2026, 10, 27, 1, 2, 3, 0, time.UTC)
+	measured := experiment.MeasuredSamples{}
+	for sequence := range 3 {
+		measured = append(measured, experiment.Sample{
+			ExperimentID: "baseline", Sequence: sequence,
+			PlannedStart: started, ActualStart: started.Add(time.Millisecond), FinishedAt: started.Add(2 * time.Millisecond),
+			Outcome:    httpmeasure.Outcome{Category: httpmeasure.OutcomeSuccess, StatusCode: 200, ResponseReceived: true, Complete: true},
+			Connection: experiment.Connection{Observed: true, Reused: sequence > 0}, Protocol: "HTTP/1.1", StatusCode: 200, ResponseBytes: 42,
+		})
+	}
+	options := config.Defaults()
+	options.IncludeSamples = true
+	options.SampleLimit = 2
+	effective := config.Resolve(options)
+	plan := experiment.NewPlan(experiment.PlanInput{ID: "baseline", Kind: experiment.KindBaseline, Config: effective.Snapshot(), Requests: 3, Workers: 1, Rate: 5})
+	value, err := Build(BuildInput{
+		Result: diagnose.Result{
+			Suite: diagnosis.Suite{Baseline: runner.ExperimentReport{
+				Result:    experiment.Result{Plan: plan, Execution: experiment.Execution{StartedAt: started, FinishedAt: started.Add(time.Second)}, Measured: measured},
+				Aggregate: metrics.Aggregate{Phases: map[string]metrics.LatencyStatistics{}},
+			}},
+			Diagnosis: diagnosis.Report{RuleVersion: diagnosis.CurrentRuleVersion},
+		},
+		Target:        httpmeasure.TargetIdentity{Scheme: "https", Host: "example.com", Path: "/", RedactedURL: "https://example.com/", Fingerprint: strings.Repeat("a", 64)},
+		Configuration: effective.Snapshot(), Tool: buildinfo.Info{Version: "test"}, RunID: "sample-run", CreatedAt: started,
+		Environment: Environment{OS: "test", Arch: "test", GoVersion: "go-test", CPUs: 1},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if value.SampleExport == nil || value.SampleExport.Available != 3 || value.SampleExport.Included != 2 || !value.SampleExport.Truncated || len(value.Samples) != 2 {
+		t.Fatalf("sample export = %+v, samples = %d", value.SampleExport, len(value.Samples))
+	}
+	if value.Samples[0].StatusCode == nil || *value.Samples[0].StatusCode != 200 || value.Samples[0].SchedulingDelayMillis != 1 {
+		t.Fatalf("sample = %+v", value.Samples[0])
+	}
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sampleBytes, _ := json.Marshal(value.Samples)
+	for _, forbidden := range []string{"https://", "secret", "\"headers\"", "\"request_body\"", "\"response_body\"", "\"error\""} {
+		if strings.Contains(strings.ToLower(string(sampleBytes)), forbidden) {
+			t.Fatalf("samples contain forbidden %q: %s", forbidden, sampleBytes)
+		}
+	}
+	if err := ValidateJSON(encoded); err != nil {
+		t.Fatal(err)
+	}
+	parsed, err := Parse(encoded)
+	if err != nil || len(parsed.Report.Samples) != 2 {
+		t.Fatalf("round trip = %+v, %v", parsed, err)
+	}
+}
+
+func TestBuildOmitsSamplesByDefaultAndRejectsUnboundedLimit(t *testing.T) {
+	value, err := Build(BuildInput{CreatedAt: time.Unix(1, 0)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, _ := json.Marshal(value)
+	if value.SampleExport != nil || value.Samples != nil || strings.Contains(string(encoded), "\"samples\":") {
+		t.Fatalf("default report contains sample data: %s", encoded)
+	}
+	_, err = Build(BuildInput{Configuration: config.Snapshot{IncludeSamples: true, SampleLimit: MaxExportedSamples + 1}})
+	if err == nil || !strings.Contains(err.Error(), "sample limit") {
+		t.Fatalf("error = %v", err)
+	}
+}
