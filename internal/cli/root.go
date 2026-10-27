@@ -54,5 +54,6 @@ func newRootCommand(stdout, stderr io.Writer, info buildinfo.Info) *cobra.Comman
 		return invalidUsage(err)
 	})
 	command.AddCommand(newInspectCommand(stdout, stderr, inspect.NewService(nil)))
+	command.AddCommand(newDiagnoseCommand(stdout, stderr))
 	return command
 }
