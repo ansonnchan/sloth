@@ -42,3 +42,17 @@ elapsed time.
 Changing a value or its interpretation requires a diagnostic rule-version
 change and updated boundary tests. Confidence is an evidence-quality label, not
 a probability or statistical significance claim.
+
+## Evidence strength
+
+A rule first checks that the planned sample count is known, available counts are
+valid, at least 10 usable samples exist, and at least half of the planned
+evidence is available. Evidence below either minimum is suppressed and can feed
+the `INSUFFICIENT_EVIDENCE` finding.
+
+Adequate evidence is low confidence by default. It becomes medium at 30 samples
+and 80% completeness, or high at 100 samples and 95% completeness. Inconsistent,
+contradictory, or interrupted evidence is retained only at low confidence with
+an explicit limitation. Any finding that depends on p99 needs at least 200
+samples for high confidence, so the default 100-request arm cannot make a
+high-confidence p99 claim.
