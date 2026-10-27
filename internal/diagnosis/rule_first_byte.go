@@ -31,7 +31,7 @@ func (FirstByteRule) Evaluate(suite Suite, thresholds Thresholds) Evaluation {
 
 	share := safeRatio(firstByte.Median, total.Median)
 	if firstByte.Median < thresholds.FirstByteMinimum || share < thresholds.FirstByteShare {
-		return Evaluation{}
+		return Evaluation{Limitations: assessment.Reasons}
 	}
 
 	observation := fmt.Sprintf(

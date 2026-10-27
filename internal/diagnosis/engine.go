@@ -16,6 +16,11 @@ type Rule interface {
 	Evaluate(Suite, Thresholds) Evaluation
 }
 
+type summaryRule interface {
+	Rule
+	EvaluateSummary(Suite, Thresholds, []Evaluation) Evaluation
+}
+
 // Registry stores rules in their public evaluation order.
 type Registry struct {
 	rules []Rule
@@ -64,8 +69,15 @@ func NewEngine(thresholds Thresholds, registry Registry) (Engine, error) {
 // identity by returning a different finding code.
 func (engine Engine) Evaluate(suite Suite) (Report, error) {
 	report := Report{RuleVersion: engine.thresholds.RuleVersion, Findings: []Finding{}}
+	evaluations := make([]Evaluation, 0, len(engine.registry.rules))
 	for _, rule := range engine.registry.rules {
-		evaluation := rule.Evaluate(suite, engine.thresholds)
+		var evaluation Evaluation
+		if summary, ok := rule.(summaryRule); ok {
+			evaluation = summary.EvaluateSummary(suite, engine.thresholds, append([]Evaluation(nil), evaluations...))
+		} else {
+			evaluation = rule.Evaluate(suite, engine.thresholds)
+		}
+		evaluations = append(evaluations, evaluation)
 		if evaluation.Finding == nil {
 			continue
 		}
@@ -79,4 +91,29 @@ func (engine Engine) Evaluate(suite Suite) (Report, error) {
 		report.Findings = append(report.Findings, finding)
 	}
 	return report, nil
+}
+
+// DefaultRegistry returns all v1 rules in their stable public order.
+func DefaultRegistry() Registry {
+	registry, err := NewRegistry(
+		FirstByteRule{},
+		ConnectionRule{},
+		TailRule{},
+		ConcurrencyRule{},
+		ErrorRule{},
+		InsufficientEvidenceRule{},
+	)
+	if err != nil {
+		panic(err) // The compile-time default set has fixed nonempty unique codes.
+	}
+	return registry
+}
+
+// DefaultEngine returns the complete deterministic v1 diagnostic engine.
+func DefaultEngine() Engine {
+	engine, err := NewEngine(DefaultThresholds(), DefaultRegistry())
+	if err != nil {
+		panic(err) // The built-in threshold profile always has a rule version.
+	}
+	return engine
 }

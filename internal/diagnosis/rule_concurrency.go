@@ -51,7 +51,7 @@ func (ConcurrencyRule) Evaluate(suite Suite, thresholds Thresholds) Evaluation {
 	schedulingPressure := scheduleShare >= thresholds.SchedulingShare || missedShare >= thresholds.SchedulingShare
 	latencySensitive := p95Ratio >= thresholds.ConcurrencyP95Ratio
 	if !latencySensitive && !errorIncrease && !schedulingPressure {
-		return Evaluation{}
+		return Evaluation{Limitations: assessment.Reasons}
 	}
 
 	title := "Endpoint behavior changed as achieved concurrency increased"

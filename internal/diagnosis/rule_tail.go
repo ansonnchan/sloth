@@ -27,7 +27,7 @@ func (TailRule) Evaluate(suite Suite, thresholds Thresholds) Evaluation {
 	ratio := safeRatio(latency.P95, latency.Median)
 	gap := latency.P95 - latency.Median
 	if ratio < thresholds.TailRatio || gap < thresholds.TailMinimumGap {
-		return Evaluation{}
+		return Evaluation{Limitations: assessment.Reasons}
 	}
 
 	notes := append([]string(nil), assessment.Reasons...)
