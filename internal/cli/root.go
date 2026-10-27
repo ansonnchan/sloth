@@ -55,5 +55,7 @@ func newRootCommand(stdout, stderr io.Writer, info buildinfo.Info) *cobra.Comman
 	})
 	command.AddCommand(newInspectCommand(stdout, stderr, inspect.NewService(nil)))
 	command.AddCommand(newDiagnoseCommand(stdout, stderr))
+	command.AddCommand(newExportCommand(stdout, stderr, info))
+	command.AddCommand(newCompareCommand(stdout, stderr))
 	return command
 }

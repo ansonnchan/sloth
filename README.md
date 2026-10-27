@@ -11,22 +11,23 @@ Sloth combines bounded measurements, controlled experiments, statistics, and
 evidence-based explanations in one local Go binary.
 
 > [!NOTE]
-> Sloth is under active development. Single-request inspection is available;
-> diagnosis, export, and comparison remain planned v1 workflows until their
-> roadmap milestones land.
+> Sloth is under active development. Inspect, diagnose, export, and comparison
+> workflows are available; hardening and public v1 packaging remain in progress.
 
 ## Workflows
 
 ```bash
-# Inspect one bounded request (available)
+# Inspect one bounded request
 sloth inspect http://localhost:8080/api/users
 
 # Run controlled diagnostic experiments
-# (planned)
 sloth diagnose http://localhost:8080/api/users
 
 # Save a versioned, redacted JSON report
 sloth export http://localhost:8080/api/users
+
+# Save somewhere other than the existing Desktop (parent directory must exist)
+sloth export --output ./reports/baseline.json http://localhost:8080/api/users
 
 # Compare two compatible runs
 sloth compare before.json after.json --fail-on-regression 20

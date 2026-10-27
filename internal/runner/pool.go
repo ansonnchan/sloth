@@ -109,7 +109,7 @@ func (p *Pool) Run(ctx context.Context, arrivals []Arrival, limiter *StartLimite
 
 	setStop := func(reason experiment.StopReason) {
 		stateMu.Lock()
-		if stopReason == experiment.StopNone {
+		if stopPriority(reason) > stopPriority(stopReason) {
 			stopReason = reason
 		}
 		stateMu.Unlock()
@@ -199,4 +199,19 @@ func (p *Pool) Run(ctx context.Context, arrivals []Arrival, limiter *StartLimite
 	stateMu.Unlock()
 	sort.SliceStable(report.Samples, func(i, j int) bool { return report.Samples[i].Sequence < report.Samples[j].Sequence })
 	return report, runErr
+}
+
+// A more specific terminal cause may arrive after another worker notices the
+// shared budget. Preserve the cause that best explains why the run failed.
+func stopPriority(reason experiment.StopReason) int {
+	switch reason {
+	case experiment.StopExecutionFailure:
+		return 3
+	case experiment.StopCancelled:
+		return 2
+	case experiment.StopBudgetExhausted:
+		return 1
+	default:
+		return 0
+	}
 }

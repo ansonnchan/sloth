@@ -1,0 +1,57 @@
+{
+  "schema_version": "sloth.report/v1.0",
+  "tool_version": "example",
+  "rule_version": "1.0.0",
+  "tool": {"commit": "example", "build_time": "example", "dirty": false},
+  "run": {
+    "id": "example-aggregate",
+    "created_at": "2026-10-27T12:00:00Z",
+    "started_at": "2026-10-27T12:00:00Z",
+    "finished_at": "2026-10-27T12:02:06Z",
+    "interrupted": false
+  },
+  "target": {
+    "scheme": "https",
+    "host": "example.com",
+    "path": "/api",
+    "query_keys": ["token"],
+    "redacted_url": "https://example.com/api?token=%5BREDACTED%5D",
+    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "configuration": {
+    "method": "GET",
+    "timeout_ms": 30000,
+    "requests": 100,
+    "warmups": 5,
+    "rate_per_second": 5,
+    "concurrency_stages": [1, 5, 10],
+    "follow_redirects": false,
+    "redirect_limit": 5,
+    "color": "auto",
+    "body_limit_bytes": 1048576,
+    "include_samples": false,
+    "sample_limit": 1000,
+    "allow_high_load": false,
+    "allow_unsafe_methods": false
+  },
+  "environment": {"os": "example", "arch": "example", "go_version": "example", "cpus": 1},
+  "overall": {
+    "measured_outcomes": {
+      "attempted": 0,
+      "completed": 0,
+      "successful": 0,
+      "http_error": 0,
+      "transport_error": 0,
+      "timeout": 0,
+      "cancelled": 0,
+      "body_limit": 0
+    },
+    "warmup_attempts": 0,
+    "warmup_outcomes": {},
+    "response_bytes": 0,
+    "interrupted_experiments": 0
+  },
+  "experiments": [],
+  "diagnostics": [],
+  "limitations": ["Example contains aggregate contract fields only."]
+}
