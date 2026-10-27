@@ -56,3 +56,13 @@ contradictory, or interrupted evidence is retained only at low confidence with
 an explicit limitation. Any finding that depends on p99 needs at least 200
 samples for high confidence, so the default 100-request arm cannot make a
 high-confidence p99 claim.
+
+## `HIGH_FIRST_BYTE_WAIT`
+
+This rule compares baseline median first-byte wait with median total latency. It
+requires first-byte wait to be at least 100 ms and at least 60% of total latency.
+Its observation is limited to the client-visible interval before response
+headers. Server processing, dependency latency, server queueing, and otherwise
+unisolated network delay are listed only as possible causes. Missing, sparse,
+interrupted, or internally contradictory phase evidence suppresses or lowers
+the finding according to the evidence-strength policy.
