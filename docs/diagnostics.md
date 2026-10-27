@@ -86,3 +86,15 @@ their ratio and gap, sample count, and incomplete outcomes. P99 is shown only as
 descriptive context; the default 100 samples cannot support a high-confidence
 p99 interpretation. Sparse, invalid, interrupted, or internally inconsistent
 outcomes suppress or lower confidence.
+
+## `CONCURRENCY_SENSITIVITY`
+
+This rule first requires at least a 25% difference in achieved request rate; a
+change in configured concurrency alone is not evidence. It then evaluates p50,
+p95, throughput, error counts, actual in-flight concurrency, and scheduling
+delay across every stage. A 1.5x p95 increase or a one-percentage-point error
+increase can identify endpoint-sensitive behavior. Scheduling delay or an
+offered-versus-achieved shortfall at 20% instead produces a client-pressure
+finding and lowers confidence in endpoint interpretation. Evidence lists
+offered rate, achieved rate, actual concurrency, p50, p95, successes, errors,
+and scheduling delay for every stage.
