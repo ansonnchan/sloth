@@ -28,6 +28,9 @@ sloth diagnose http://localhost:8080/api/users
 # Save a versioned, redacted JSON report
 sloth export http://localhost:8080/api/users
 
+# Save somewhere other than the existing Desktop (parent directory must exist)
+sloth export --output ./reports/baseline.json http://localhost:8080/api/users
+
 # Compare two compatible runs
 sloth compare before.json after.json --fail-on-regression 20
 ```
