@@ -76,3 +76,13 @@ the median delta, and client-visible connect and TLS contributions. HTTP/2
 multiplexing or proxy-tunnel ambiguity lowers confidence. The recommendation is
 connection reuse and bounded pooling, not a claim that a particular network
 layer is definitively at fault.
+
+## `TAIL_VARIABILITY`
+
+This rule requires baseline p95 latency to be at least twice p50 and at least
+100 ms higher. Both relative and absolute thresholds avoid labeling a small
+absolute spread as operationally important. Evidence includes p50, p95, p99,
+their ratio and gap, sample count, and incomplete outcomes. P99 is shown only as
+descriptive context; the default 100 samples cannot support a high-confidence
+p99 interpretation. Sparse, invalid, interrupted, or internally inconsistent
+outcomes suppress or lower confidence.
