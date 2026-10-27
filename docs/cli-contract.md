@@ -50,3 +50,18 @@ upstream delay—not as server execution time.
 Once measurement has begun, runtime and interruption outcomes still produce a
 document before the process returns its nonzero exit status; validation failures
 do not. See [Inspect JSON](inspect-json.md) for the field and nullability rules.
+
+## Diagnose command
+
+`sloth diagnose URL` runs the standard baseline, alternating fresh/reused
+connection, and configured concurrency experiments through the six-rule
+diagnostic engine. Defaults are 100 measured requests and five warm-ups per arm,
+five aggregate request starts per second, and concurrency stages 1, 5, and 10.
+The default suite therefore contains 600 measured requests plus 30 warm-ups.
+
+Before opening a body file or contacting the target, Sloth validates all flags,
+enforces the safety policy, and writes the effective configuration, planned
+request count, and minimum schedule time to stderr. The suite shares one rate
+limiter and one hard request budget. `--quiet` suppresses plan and progress
+lines. Ctrl+C stops scheduling, retains and diagnoses partial evidence, prints
+the partial summary, and exits with status 130.
