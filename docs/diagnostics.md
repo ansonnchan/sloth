@@ -66,3 +66,13 @@ headers. Server processing, dependency latency, server queueing, and otherwise
 unisolated network delay are listed only as possible causes. Missing, sparse,
 interrupted, or internally contradictory phase evidence suppresses or lowers
 the finding according to the evidence-strength policy.
+
+## `CONNECTION_OVERHEAD`
+
+This rule requires recorded connection-state evidence from both alternating
+fresh and reused arms. Fresh median latency must exceed reused median latency by
+at least 20 ms and 20%. Evidence includes arm sizes, observed new/reused counts,
+the median delta, and client-visible connect and TLS contributions. HTTP/2
+multiplexing or proxy-tunnel ambiguity lowers confidence. The recommendation is
+connection reuse and bounded pooling, not a claim that a particular network
+layer is definitively at fault.
