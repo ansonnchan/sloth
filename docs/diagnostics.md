@@ -108,3 +108,14 @@ at 1%; non-5xx classes become high severity at 5%. Because 4xx commonly reflects
 the request rather than endpoint availability, it uses a separate 10% policy
 and does not become high severity by rate alone. User cancellation is reported
 but excluded from the denominator and never treated as an endpoint error.
+
+## `INSUFFICIENT_EVIDENCE`
+
+This rule emits one structured, low-confidence inconclusive result when other
+rules are blocked by sparse or unavailable measurements, contradictory inputs,
+incompatible connection arms, unchanged achieved load, or interruption. Its
+evidence lists concrete limitations and its recommendation names the safest
+next measurement. It never lists a likely cause. The engine omits this finding
+when a medium- or high-confidence positive finding already explains the
+available evidence, or when all evaluated evidence is adequate and clearly
+normal.

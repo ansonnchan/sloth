@@ -46,7 +46,7 @@ func (ErrorRule) Evaluate(suite Suite, thresholds Thresholds) Evaluation {
 		}
 	}
 	if len(crossed) == 0 {
-		return Evaluation{}
+		return Evaluation{Limitations: assessment.Reasons}
 	}
 
 	names := make([]string, 0, len(crossed))

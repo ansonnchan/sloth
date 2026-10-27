@@ -40,7 +40,7 @@ func (ConnectionRule) Evaluate(suite Suite, thresholds Thresholds) Evaluation {
 	delta := fresh.Latency.Median - reused.Latency.Median
 	deltaRatio := safeRatio(delta, fresh.Latency.Median)
 	if delta < thresholds.ConnectionMinimum || deltaRatio < thresholds.ConnectionDeltaRatio {
-		return Evaluation{}
+		return Evaluation{Limitations: assessment.Reasons}
 	}
 
 	notes := append([]string(nil), assessment.Reasons...)
