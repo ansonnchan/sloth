@@ -110,6 +110,8 @@ func newExportCommand(stdout, stderr io.Writer, info buildinfo.Info) *cobra.Comm
 	flags.Int64Var(&options.BodyLimit, "body-limit", options.BodyLimit, "maximum response-body bytes per request")
 	flags.StringVarP(&outputPath, "output", "o", "", "report path (default: existing Desktop)")
 	flags.BoolVarP(&force, "force", "f", false, "replace an existing report path")
+	flags.BoolVar(&options.IncludeSamples, "include-samples", false, "include bounded per-request timing and outcome samples")
+	flags.IntVar(&options.SampleLimit, "sample-limit", options.SampleLimit, "maximum measured samples to include")
 	flags.BoolVar(&quiet, "quiet", false, "suppress plan and progress output")
 	flags.BoolVar(&options.AllowHighLoad, "allow-high-load", false, "acknowledge settings above normal safety limits")
 	flags.BoolVar(&options.AllowUnsafeMethods, "allow-unsafe-methods", false, "acknowledge a method that may change server state")
@@ -125,6 +127,9 @@ func writeExportReport(path string, value report.Report, force bool) error {
 		return fmt.Errorf("encode export report: %w", err)
 	}
 	encoded = append(encoded, '\n')
+	if int64(len(encoded)) > report.MaxReportBytes {
+		return fmt.Errorf("encode export report: serialized size %d exceeds %d-byte report limit; lower --sample-limit", len(encoded), report.MaxReportBytes)
+	}
 	if err := report.WriteAtomic(path, encoded, force); err != nil {
 		return fmt.Errorf("persist export report: %w", err)
 	}

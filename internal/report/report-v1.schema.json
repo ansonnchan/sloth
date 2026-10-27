@@ -18,8 +18,12 @@
     "experiments": {"type": "array", "maxItems": 203, "items": {"$ref": "#/$defs/experiment"}},
     "diagnostics": {"type": "array", "maxItems": 6, "items": {"$ref": "#/$defs/finding"}},
     "limitations": {"$ref": "#/$defs/limitations"},
-    "samples": {"type": "array", "maxItems": 0}
+    "sample_export": {"$ref": "#/$defs/sample_export"},
+    "samples": {"type": "array", "maxItems": 10000, "items": {"$ref": "#/$defs/sample"}}
   },
+  "allOf": [
+    {"if": {"required": ["samples"]}, "then": {"required": ["sample_export"]}}
+  ],
   "$defs": {
     "tool": {
       "type": "object", "additionalProperties": false,
@@ -123,6 +127,74 @@
         "execution": {"$ref": "#/$defs/execution"},
         "aggregate": {"$ref": "#/$defs/aggregate"},
         "limitations": {"$ref": "#/$defs/limitations"}
+      }
+    },
+    "sample_export": {
+      "type": "object", "additionalProperties": false,
+      "required": ["available", "included", "limit", "truncated"],
+      "properties": {
+        "available": {"$ref": "#/$defs/count"},
+        "included": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "limit": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "truncated": {"type": "boolean"}
+      }
+    },
+    "sample": {
+      "type": "object", "additionalProperties": false,
+      "required": ["experiment_id", "sequence", "planned_start", "actual_start", "finished_at", "scheduling_delay_ms", "timings", "outcome", "connection", "status_code", "response_bytes"],
+      "properties": {
+        "experiment_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "sequence": {"type": "integer", "minimum": 0, "maximum": 50000},
+        "planned_start": {"type": "string", "format": "date-time"},
+        "actual_start": {"type": "string", "format": "date-time"},
+        "finished_at": {"type": "string", "format": "date-time"},
+        "scheduling_delay_ms": {"type": "number", "minimum": 0},
+        "timings": {"$ref": "#/$defs/sample_timings"},
+        "outcome": {"$ref": "#/$defs/sample_outcome"},
+        "connection": {"$ref": "#/$defs/sample_connection"},
+        "protocol": {"type": "string", "maxLength": 64},
+        "status_code": {"type": ["integer", "null"], "minimum": 100, "maximum": 599},
+        "response_bytes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "sample_timings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["total", "dns", "connect", "tls", "request_write", "first_byte_wait", "body_transfer"],
+      "properties": {
+        "total": {"$ref": "#/$defs/sample_duration"},
+        "dns": {"$ref": "#/$defs/sample_duration"},
+        "connect": {"$ref": "#/$defs/sample_duration"},
+        "tls": {"$ref": "#/$defs/sample_duration"},
+        "request_write": {"$ref": "#/$defs/sample_duration"},
+        "first_byte_wait": {"$ref": "#/$defs/sample_duration"},
+        "body_transfer": {"$ref": "#/$defs/sample_duration"}
+      }
+    },
+    "sample_duration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["duration_ms"],
+      "properties": {
+        "duration_ms": {"$ref": "#/$defs/nullable_duration"},
+        "unavailable_reason": {"enum": ["missing_start", "missing_end", "incomplete_observations", "out_of_order_observations", "connection_reused", "cleartext_request"]}
+      }
+    },
+    "sample_outcome": {
+      "type": "object", "additionalProperties": false,
+      "required": ["category", "response_received", "complete"],
+      "properties": {
+        "category": {"enum": ["success", "http_error", "timeout", "transport_error", "cancelled", "body_limit"]},
+        "failure_phase": {"enum": ["unknown", "dns", "connect", "tls", "request", "response_body"]},
+        "response_received": {"type": "boolean"},
+        "complete": {"type": "boolean"}
+      }
+    },
+    "sample_connection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["observed", "reused", "was_idle"],
+      "properties": {
+        "observed": {"type": "boolean"},
+        "reused": {"type": "boolean"},
+        "was_idle": {"type": "boolean"}
       }
     },
     "execution": {

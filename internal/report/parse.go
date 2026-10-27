@@ -159,4 +159,5 @@ var knownReportFields = map[string]struct{}{
 	"schema_version": {}, "tool_version": {}, "rule_version": {}, "tool": {}, "run": {},
 	"target": {}, "configuration": {}, "environment": {}, "overall": {}, "experiments": {},
 	"diagnostics": {}, "limitations": {}, "samples": {},
+	"sample_export": {},
 }

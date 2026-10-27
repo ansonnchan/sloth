@@ -82,7 +82,7 @@ func TestSchemaRejectsInvalidContracts(t *testing.T) {
 		{"invalid unit", func(value map[string]any) {
 			value["diagnostics"].([]any)[0].(map[string]any)["evidence"].(map[string]any)["metrics"].([]any)[0].(map[string]any)["unit"] = "seconds"
 		}},
-		{"unbounded samples", func(value map[string]any) { value["samples"] = []any{map[string]any{"sequence": 1}} }},
+		{"samples without metadata", func(value map[string]any) { value["samples"] = []any{} }},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

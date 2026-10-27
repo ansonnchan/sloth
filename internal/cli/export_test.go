@@ -23,7 +23,8 @@ func TestExportCommandWritesValidatedReportAndOnlyPathToStdout(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := Run([]string{
 		"export", "--output", path, "--requests", "10", "--warmups", "0", "--rate", "1000",
-		"--concurrency", "1,2", "--allow-high-load", server.URL + "/api?token=secret",
+		"--concurrency", "1,2", "--allow-high-load", "--include-samples", "--sample-limit", "3",
+		server.URL + "/api?token=secret",
 	}, &stdout, &stderr, buildinfo.Info{Version: "test", Commit: "abc"})
 	if code != int(ExitSuccess) {
 		t.Fatalf("Run() = %d, stderr = %q", code, stderr.String())
@@ -40,6 +41,9 @@ func TestExportCommandWritesValidatedReportAndOnlyPathToStdout(t *testing.T) {
 	}
 	if parsed.Report.ToolVersion != "test" || parsed.Report.Target.QueryKeys[0] != "token" || strings.Contains(parsed.Report.Target.RedactedURL, "secret") {
 		t.Fatalf("report metadata = %+v / %+v", parsed.Report.Tool, parsed.Report.Target)
+	}
+	if parsed.Report.SampleExport == nil || parsed.Report.SampleExport.Included != 3 || !parsed.Report.SampleExport.Truncated || len(parsed.Report.Samples) != 3 {
+		t.Fatalf("sample export = %+v, samples = %d", parsed.Report.SampleExport, len(parsed.Report.Samples))
 	}
 }
 
