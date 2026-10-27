@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ansonnchan/sloth/docs/schema/report-v1.schema.json",
+  "title": "Sloth canonical report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "tool_version", "rule_version", "tool", "run", "target", "configuration", "environment", "overall", "experiments", "diagnostics", "limitations"],
+  "properties": {
+    "schema_version": {"const": "sloth.report/v1.0"},
+    "tool_version": {"type": "string", "minLength": 1, "maxLength": 128},
+    "rule_version": {"type": "string", "minLength": 1, "maxLength": 64},
+    "tool": {"$ref": "#/$defs/tool"},
+    "run": {"$ref": "#/$defs/run"},
+    "target": {"$ref": "#/$defs/target"},
+    "configuration": {"$ref": "#/$defs/configuration"},
+    "environment": {"$ref": "#/$defs/environment"},
+    "overall": {"$ref": "#/$defs/overall"},
+    "experiments": {"type": "array", "maxItems": 203, "items": {"$ref": "#/$defs/experiment"}},
+    "diagnostics": {"type": "array", "maxItems": 6, "items": {"$ref": "#/$defs/finding"}},
+    "limitations": {"$ref": "#/$defs/limitations"},
+    "samples": {"type": "array", "maxItems": 0}
+  },
+  "$defs": {
+    "tool": {
+      "type": "object", "additionalProperties": false,
+      "required": ["commit", "build_time", "dirty"],
+      "properties": {
+        "commit": {"type": "string", "maxLength": 128},
+        "build_time": {"type": "string", "maxLength": 128},
+        "dirty": {"type": "boolean"}
+      }
+    },
+    "run": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "created_at", "started_at", "finished_at", "interrupted"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9._-]+$"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "started_at": {"type": "string", "format": "date-time"},
+        "finished_at": {"type": "string", "format": "date-time"},
+        "interrupted": {"type": "boolean"}
+      }
+    },
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scheme", "host", "path", "redacted_url", "fingerprint"],
+      "properties": {
+        "scheme": {"enum": ["http", "https"]},
+        "host": {"type": "string", "minLength": 1, "maxLength": 253},
+        "port": {"type": "string", "pattern": "^[0-9]{1,5}$"},
+        "path": {"type": "string", "minLength": 1, "maxLength": 8192},
+        "query_keys": {"type": "array", "maxItems": 128, "items": {"type": "string", "maxLength": 256}},
+        "redacted_url": {"type": "string", "minLength": 1, "maxLength": 16384},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "configuration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "timeout_ms", "requests", "warmups", "rate_per_second", "concurrency_stages", "follow_redirects", "redirect_limit", "color", "body_limit_bytes", "include_samples", "sample_limit", "allow_high_load", "allow_unsafe_methods"],
+      "properties": {
+        "method": {"enum": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]},
+        "timeout_ms": {"type": "integer", "minimum": 1, "maximum": 300000},
+        "requests": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "warmups": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "rate_per_second": {"type": "number", "exclusiveMinimum": 0, "maximum": 1000},
+        "concurrency_stages": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"type": "integer", "minimum": 1, "maximum": 200}},
+        "follow_redirects": {"type": "boolean"},
+        "redirect_limit": {"type": "integer", "minimum": 1, "maximum": 10},
+        "color": {"enum": ["auto", "always", "never"]},
+        "body_limit_bytes": {"type": "integer", "minimum": 1, "maximum": 104857600},
+        "include_samples": {"type": "boolean"},
+        "sample_limit": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "allow_high_load": {"type": "boolean"},
+        "allow_unsafe_methods": {"type": "boolean"}
+      }
+    },
+    "environment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["os", "arch", "go_version", "cpus"],
+      "properties": {
+        "os": {"type": "string", "minLength": 1, "maxLength": 64},
+        "arch": {"type": "string", "minLength": 1, "maxLength": 64},
+        "go_version": {"type": "string", "minLength": 1, "maxLength": 128},
+        "cpus": {"type": "integer", "minimum": 1, "maximum": 1048576}
+      }
+    },
+    "outcomes": {
+      "type": "object", "additionalProperties": false,
+      "required": ["attempted", "completed", "successful", "http_error", "transport_error", "timeout", "cancelled", "body_limit"],
+      "properties": {
+        "attempted": {"$ref": "#/$defs/count"},
+        "completed": {"$ref": "#/$defs/count"},
+        "successful": {"$ref": "#/$defs/count"},
+        "http_error": {"$ref": "#/$defs/count"},
+        "transport_error": {"$ref": "#/$defs/count"},
+        "timeout": {"$ref": "#/$defs/count"},
+        "cancelled": {"$ref": "#/$defs/count"},
+        "body_limit": {"$ref": "#/$defs/count"}
+      }
+    },
+    "overall": {
+      "type": "object", "additionalProperties": false,
+      "required": ["measured_outcomes", "warmup_attempts", "warmup_outcomes", "response_bytes", "interrupted_experiments"],
+      "properties": {
+        "measured_outcomes": {"$ref": "#/$defs/outcomes"},
+        "warmup_attempts": {"$ref": "#/$defs/count"},
+        "warmup_outcomes": {"$ref": "#/$defs/count_map"},
+        "response_bytes": {"type": "integer", "minimum": 0},
+        "interrupted_experiments": {"$ref": "#/$defs/count"}
+      }
+    },
+    "experiment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "kind", "requested_samples", "warmup_requests", "workers", "rate_per_second", "warmup_outcomes", "execution", "aggregate", "limitations"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "kind": {"enum": ["baseline", "fresh_connection", "reused_connection", "concurrency"]},
+        "requested_samples": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "warmup_requests": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "workers": {"type": "integer", "minimum": 1, "maximum": 200},
+        "rate_per_second": {"type": "number", "exclusiveMinimum": 0, "maximum": 1000},
+        "warmup_outcomes": {"$ref": "#/$defs/count_map"},
+        "execution": {"$ref": "#/$defs/execution"},
+        "aggregate": {"$ref": "#/$defs/aggregate"},
+        "limitations": {"$ref": "#/$defs/limitations"}
+      }
+    },
+    "execution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["started_at", "finished_at", "offered_starts", "achieved_starts", "missed_arrivals", "interrupted"],
+      "properties": {
+        "started_at": {"type": "string", "format": "date-time"},
+        "finished_at": {"type": "string", "format": "date-time"},
+        "offered_starts": {"$ref": "#/$defs/count"},
+        "achieved_starts": {"$ref": "#/$defs/count"},
+        "missed_arrivals": {"$ref": "#/$defs/count"},
+        "interrupted": {"type": "boolean"},
+        "stop_reason": {"enum": ["cancelled", "request_budget_exhausted", "execution_failure"]}
+      }
+    },
+    "aggregate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["outcomes", "status_classes", "response_bytes", "latency", "scheduling_delay", "phases", "rates", "concurrency", "protocols", "connections", "interrupted"],
+      "properties": {
+        "outcomes": {"$ref": "#/$defs/outcomes"},
+        "status_classes": {"$ref": "#/$defs/count_map"},
+        "response_bytes": {"type": "integer", "minimum": 0},
+        "latency": {"$ref": "#/$defs/statistics"},
+        "scheduling_delay": {"$ref": "#/$defs/statistics"},
+        "phases": {
+          "type": "object", "maxProperties": 16, "additionalProperties": false,
+          "patternProperties": {"^[a-z][a-z0-9_]{0,63}$": {"$ref": "#/$defs/statistics"}}
+        },
+        "rates": {"$ref": "#/$defs/rates"},
+        "concurrency": {"$ref": "#/$defs/concurrency"},
+        "protocols": {"$ref": "#/$defs/count_map"},
+        "connections": {"$ref": "#/$defs/connections"},
+        "interrupted": {"type": "boolean"}
+      }
+    },
+    "statistics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["count", "min_ms", "max_ms", "mean_ms", "p50_ms", "p90_ms", "p95_ms", "p99_ms", "population_stddev_ms"],
+      "properties": {
+        "count": {"$ref": "#/$defs/count"},
+        "min_ms": {"$ref": "#/$defs/nullable_duration"},
+        "max_ms": {"$ref": "#/$defs/nullable_duration"},
+        "mean_ms": {"$ref": "#/$defs/nullable_duration"},
+        "p50_ms": {"$ref": "#/$defs/nullable_duration"},
+        "p90_ms": {"$ref": "#/$defs/nullable_duration"},
+        "p95_ms": {"$ref": "#/$defs/nullable_duration"},
+        "p99_ms": {"$ref": "#/$defs/nullable_duration"},
+        "population_stddev_ms": {"$ref": "#/$defs/nullable_duration"}
+      }
+    },
+    "rates": {
+      "type": "object", "additionalProperties": false,
+      "required": ["duration_ms", "offered_starts", "achieved_starts", "offered_per_second", "achieved_per_second", "completed_per_second"],
+      "properties": {
+        "duration_ms": {"type": "number", "minimum": 0},
+        "offered_starts": {"$ref": "#/$defs/count"},
+        "achieved_starts": {"$ref": "#/$defs/count"},
+        "offered_per_second": {"$ref": "#/$defs/nonnegative_number"},
+        "achieved_per_second": {"$ref": "#/$defs/nonnegative_number"},
+        "completed_per_second": {"$ref": "#/$defs/nonnegative_number"}
+      }
+    },
+    "concurrency": {
+      "type": "object", "additionalProperties": false,
+      "required": ["peak", "time_weighted_in_flight"],
+      "properties": {
+        "peak": {"type": "integer", "minimum": 0, "maximum": 200},
+        "time_weighted_in_flight": {"type": "number", "minimum": 0, "maximum": 200}
+      }
+    },
+    "connections": {
+      "type": "object", "additionalProperties": false,
+      "required": ["observed", "new", "reused"],
+      "properties": {
+        "observed": {"$ref": "#/$defs/count"},
+        "new": {"$ref": "#/$defs/count"},
+        "reused": {"$ref": "#/$defs/count"}
+      }
+    },
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "rule_version", "severity", "confidence", "title", "observation", "recommendation", "evidence"],
+      "properties": {
+        "code": {"enum": ["HIGH_FIRST_BYTE_WAIT", "CONNECTION_OVERHEAD", "TAIL_VARIABILITY", "CONCURRENCY_SENSITIVITY", "ERROR_RATE", "INSUFFICIENT_EVIDENCE"]},
+        "rule_version": {"type": "string", "minLength": 1, "maxLength": 64},
+        "severity": {"enum": ["info", "warning", "high"]},
+        "confidence": {"enum": ["low", "medium", "high"]},
+        "title": {"type": "string", "minLength": 1, "maxLength": 512},
+        "observation": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "possible_causes": {"type": "array", "maxItems": 16, "items": {"type": "string", "minLength": 1, "maxLength": 1024}},
+        "recommendation": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "evidence": {"$ref": "#/$defs/evidence"}
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "metrics": {"type": "array", "maxItems": 128, "items": {"$ref": "#/$defs/metric"}},
+        "notes": {"type": "array", "maxItems": 128, "items": {"type": "string", "minLength": 1, "maxLength": 2048}}
+      }
+    },
+    "metric": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "value", "unit"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,127}$"},
+        "value": {"type": "number"},
+        "unit": {"enum": ["count", "ratio", "milliseconds", "requests_per_second"]}
+      }
+    },
+    "count_map": {
+      "type": "object", "maxProperties": 128,
+      "additionalProperties": false,
+      "patternProperties": {"^[A-Za-z0-9_./-]{1,128}$": {"$ref": "#/$defs/count"}}
+    },
+    "limitations": {"type": "array", "maxItems": 256, "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+    "count": {"type": "integer", "minimum": 0, "maximum": 50000},
+    "nullable_duration": {"type": ["number", "null"], "minimum": 0},
+    "nonnegative_number": {"type": "number", "minimum": 0}
+  }
+}
