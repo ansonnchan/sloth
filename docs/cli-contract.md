@@ -79,3 +79,27 @@ stdout. Plan and progress lines remain on stderr, or are suppressed with
 request or response bodies, headers, or raw samples. See
 [Diagnose JSON](diagnose-json.md) for the transient command-output contract; the
 persisted report schema is introduced separately by the export milestone.
+
+## Export command
+
+`sloth export URL` runs the standard diagnostic suite, validates a canonical
+`sloth.report/v1.0` document, and atomically writes it to the existing Desktop
+or `--output` path. Existing targets require `--force`. Plan and progress stay
+on stderr; successful stdout contains only the absolute final path.
+
+`--include-samples` opts into timing/outcome samples, bounded by
+`--sample-limit` (1,000 by default, 10,000 maximum) and the 16 MiB report limit.
+Cancellation or validation failure leaves no final file.
+
+## Compare command
+
+`sloth compare BEFORE.json AFTER.json` validates both files, checks workload
+compatibility, and renders descriptive before/after deltas. Compatibility
+warnings always precede metrics and conclusions.
+
+`--fail-on-regression PERCENT` enables the CI gate. Its default metric is p95;
+`--metric p50|p95|p99` selects another latency percentile. The gate uses raw,
+unrounded percentage changes for every compatible experiment. Malformed,
+incompatible, missing, zero-baseline, or interrupted evidence cannot pass by
+default: validation uses exit 2, confirmed regression exit 3, and an interrupted
+saved run exit 130.
