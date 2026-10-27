@@ -115,6 +115,9 @@ func newRunID() (string, error) {
 func newExperiment(source runner.ExperimentReport) Experiment {
 	plan := source.Result.Plan
 	limitations := append([]string(nil), source.Aggregate.Limitations...)
+	if limitations == nil {
+		limitations = []string{}
+	}
 	return Experiment{
 		ID: plan.ID(), Kind: plan.Kind(), RequestedSamples: plan.Requests(), WarmupRequests: plan.Warmups(),
 		Workers: plan.Workers(), RatePerSecond: plan.Rate(), WarmupOutcomes: outcomeSummary(source.Result.WarmupSummary),
