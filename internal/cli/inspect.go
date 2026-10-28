@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/ansonnchan/sloth/internal/config"
@@ -16,12 +15,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newInspectCommand(stdout, stderr io.Writer, service *inspect.Service) *cobra.Command {
+func newInspectCommand(stdout, stderr io.Writer, service *inspect.Service, presentation *presentationOptions) *cobra.Command {
 	options := config.Defaults()
 	var headers []string
 	var bodyFile string
-	var colorMode = string(options.Color)
-	var ascii bool
 	var jsonOutput bool
 
 	command := &cobra.Command{
@@ -31,7 +28,7 @@ func newInspectCommand(stdout, stderr io.Writer, service *inspect.Service) *cobr
 			return invalidUsage(cobra.ExactArgs(1)(command, args))
 		},
 		RunE: func(command *cobra.Command, args []string) error {
-			options.Color = config.ColorMode(colorMode)
+			options.Color = presentation.colorMode()
 			input := config.Input{Target: args[0], Headers: headers, Options: options}
 			if err := config.Validate(input); err != nil {
 				return err
@@ -80,7 +77,7 @@ func newInspectCommand(stdout, stderr io.Writer, service *inspect.Service) *cobr
 			return render.Inspect(stdout, render.NewInspectView(result), render.Options{
 				Width: terminalWidth(),
 				Color: useColor(options.Color, stdout),
-				ASCII: ascii,
+				ASCII: presentation.ASCII,
 			})
 		},
 	}
@@ -93,8 +90,6 @@ func newInspectCommand(stdout, stderr io.Writer, service *inspect.Service) *cobr
 	flags.BoolVar(&options.FollowRedirects, "follow-redirects", options.FollowRedirects, "follow bounded HTTP redirects")
 	flags.IntVar(&options.RedirectLimit, "redirect-limit", options.RedirectLimit, "maximum redirect hops")
 	flags.Int64Var(&options.BodyLimit, "body-limit", options.BodyLimit, "maximum response-body bytes")
-	flags.StringVar(&colorMode, "color", colorMode, "color mode: auto, always, or never")
-	flags.BoolVar(&ascii, "ascii", false, "use ASCII-only terminal output")
 	flags.BoolVar(&jsonOutput, "json", false, "write one machine-readable JSON document")
 	flags.BoolVar(&options.AllowHighLoad, "allow-high-load", false, "acknowledge settings above normal safety limits")
 	flags.BoolVar(&options.AllowUnsafeMethods, "allow-unsafe-methods", false, "acknowledge a method that may change server state")
@@ -118,30 +113,4 @@ func (source fileBodySource) Open() (io.ReadCloser, error) {
 		return nil, fmt.Errorf("open request body file: %w", err)
 	}
 	return file, nil
-}
-
-func terminalWidth() int {
-	width, err := strconv.Atoi(os.Getenv("COLUMNS"))
-	if err != nil || width < 20 {
-		return 80
-	}
-	return width
-}
-
-func useColor(mode config.ColorMode, writer io.Writer) bool {
-	switch mode {
-	case config.ColorAlways:
-		return true
-	case config.ColorNever:
-		return false
-	}
-	if os.Getenv("NO_COLOR") != "" {
-		return false
-	}
-	file, ok := writer.(*os.File)
-	if !ok {
-		return false
-	}
-	info, err := file.Stat()
-	return err == nil && info.Mode()&os.ModeCharDevice != 0
 }

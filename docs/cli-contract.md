@@ -8,6 +8,13 @@ Sloth keeps machine-readable data separate from human diagnostics:
 - Quiet mode suppresses progress, but not warnings, errors, or final data.
 - Runtime failures print one error and do not print command usage.
 
+`--color auto|always|never`, `--no-color`, and `--ascii` are consistent global
+presentation flags. `--no-color` and a non-empty `NO_COLOR` environment variable
+always suppress ANSI output, including when `--color always` is also present.
+Automatic color is enabled only for a character-device stdout. Redirected output
+is static, contains no cursor controls, and falls back to an 80-column layout
+when terminal width is unavailable.
+
 ## Exit codes
 
 | Code | Meaning |
