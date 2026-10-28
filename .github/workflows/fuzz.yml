@@ -1,0 +1,46 @@
+name: Scheduled fuzzing
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOFLAGS: -mod=readonly
+
+jobs:
+  fuzz:
+    name: Bounded fuzz targets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Fuzz configuration parsing
+        run: go test ./internal/config -run=^$ -fuzz=^FuzzValidateInput$ -fuzztime=10s
+
+      - name: Fuzz request construction
+        run: go test ./internal/httpmeasure -run=^$ -fuzz=^FuzzNewRequestSpec$ -fuzztime=10s
+
+      - name: Fuzz report parsing
+        run: go test ./internal/report -run=^$ -fuzz=^FuzzParseReport$ -fuzztime=10s
+
+      - name: Fuzz compatibility
+        run: go test ./internal/compare -run=^$ -fuzz=^FuzzCompatibilityAndDeltas$ -fuzztime=10s
+
+      - name: Fuzz delta arithmetic
+        run: go test ./internal/compare -run=^$ -fuzz=^FuzzDeltaArithmetic$ -fuzztime=10s
