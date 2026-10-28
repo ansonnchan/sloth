@@ -33,6 +33,7 @@ func execute(command *cobra.Command, args []string, stderr io.Writer) ExitCode {
 }
 
 func newRootCommand(stdout, stderr io.Writer, info buildinfo.Info) *cobra.Command {
+	presentation := defaultPresentationOptions()
 	command := &cobra.Command{
 		Use:           "sloth",
 		Short:         "Sloth explains client-observable API latency",
@@ -53,9 +54,12 @@ func newRootCommand(stdout, stderr io.Writer, info buildinfo.Info) *cobra.Comman
 	command.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
 		return invalidUsage(err)
 	})
-	command.AddCommand(newInspectCommand(stdout, stderr, inspect.NewService(nil)))
-	command.AddCommand(newDiagnoseCommand(stdout, stderr))
+	command.PersistentFlags().StringVar(&presentation.Color, "color", presentation.Color, "color mode: auto, always, or never")
+	command.PersistentFlags().BoolVar(&presentation.NoColor, "no-color", false, "disable ANSI color output")
+	command.PersistentFlags().BoolVar(&presentation.ASCII, "ascii", false, "use ASCII-only terminal output")
+	command.AddCommand(newInspectCommand(stdout, stderr, inspect.NewService(nil), &presentation))
+	command.AddCommand(newDiagnoseCommand(stdout, stderr, &presentation))
 	command.AddCommand(newExportCommand(stdout, stderr, info))
-	command.AddCommand(newCompareCommand(stdout, stderr))
+	command.AddCommand(newCompareCommand(stdout, stderr, &presentation))
 	return command
 }
