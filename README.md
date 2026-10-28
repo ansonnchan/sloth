@@ -11,8 +11,9 @@ Sloth combines bounded measurements, controlled experiments, statistics, and
 evidence-based explanations in one local Go binary.
 
 > [!NOTE]
-> Sloth is under active development. Inspect, diagnose, export, and comparison
-> workflows are available; hardening and public v1 packaging remain in progress.
+> Sloth is under active development. Inspect, diagnose, export, comparison,
+> hardening, and local example workflows are available; public v1 packaging
+> remains in progress.
 
 ## Workflows
 
@@ -66,7 +67,9 @@ flowchart TD
 ```
 
 The CLI, request execution, experiment scheduling, metrics, diagnosis, and
-reporting layers remain separate so each can be tested independently.
+reporting layers remain separate so each can be tested independently. See
+[Architecture and ownership](docs/architecture.md) for package boundaries,
+cancellation, and data ownership.
 
 ## Roadmap
 
@@ -83,7 +86,9 @@ Work is organized as ordered `SH-XX` issues:
 | SH-59–SH-62 | v1 Release | Platform builds, packages, demo, and release review |
 | SH-63–SH-68 | Post-v1 | Optional diagnostic and CI improvements |
 
-See the [delivery roadmap](docs/planning/roadmap.md),
+See the [technical documentation index](docs/README.md),
+[command reference](docs/commands.md), [methodology](docs/methodology.md),
+[delivery roadmap](docs/planning/roadmap.md),
 [context graph](docs/planning/context-graph.md), and
 [issue backlog](docs/planning/issue-backlog.md) for the current planning source.
 Shared runtime defaults are documented in [Configuration](docs/configuration.md).
@@ -112,18 +117,12 @@ main  <---------------- milestone release PR ---------------- dev
 
 ## Benchmark status
 
-No performance or accuracy claims have been established yet.
-
-The planned benchmark program will measure:
-
-- HTTP trace and aggregation overhead;
-- scheduler deviation and missed arrivals;
-- allocation and memory bounds;
-- cancellation behavior and goroutine stability;
-- behavior across representative protocols and supported platforms.
-
-Results will be published only with reproducible commands, environment metadata,
-and the limitations needed to interpret them.
+Client-only microbenchmarks cover tracing, phase derivation, aggregation,
+render-free scheduling at normal safety ceilings, and report serialization.
+The [benchmark procedure](docs/benchmarking.md) and
+[M6 evidence record](docs/benchmarks/m6-darwin-arm64.md) publish environment
+metadata, exact commands, results, and interpretation limits. These are local
+client-overhead measurements, not claims about remote server performance.
 
 ## Planned installation
 
@@ -162,8 +161,8 @@ go test -race ./...
 go build ./...
 ```
 
-Read [AGENTS.md](AGENTS.md) and the linked planning documents before changing
-behavior. Implementation begins with `SH-01`.
+Read [AGENTS.md](AGENTS.md) and the linked technical/planning documents before
+changing behavior.
 
 ## License
 

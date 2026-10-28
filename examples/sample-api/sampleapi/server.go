@@ -125,7 +125,7 @@ func (api *API) redirect(writer http.ResponseWriter, request *http.Request) {
 	if target == "" {
 		target = "/fast"
 	}
-	if target[0] != '/' || len(target) > 256 {
+	if target[0] != '/' || len(target) > 256 || len(target) > 1 && target[1] == '/' {
 		http.Error(writer, "to must be a local absolute path", http.StatusBadRequest)
 		return
 	}

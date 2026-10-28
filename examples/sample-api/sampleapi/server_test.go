@@ -79,7 +79,7 @@ func TestConcurrencyRouteReportsOverlap(t *testing.T) {
 func TestRoutesRejectUnboundedParameters(t *testing.T) {
 	server := httptest.NewServer(NewHandler())
 	t.Cleanup(server.Close)
-	for _, path := range []string{"/delay?ms=5001", "/stream?chunks=101", "/error?status=200", "/redirect?to=https://example.com"} {
+	for _, path := range []string{"/delay?ms=5001", "/stream?chunks=101", "/error?status=200", "/redirect?to=https://example.com", "/redirect?to=//example.com"} {
 		response, err := server.Client().Get(server.URL + path)
 		if err != nil {
 			t.Fatal(err)

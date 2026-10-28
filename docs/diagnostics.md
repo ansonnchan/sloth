@@ -119,3 +119,18 @@ next measurement. It never lists a likely cause. The engine omits this finding
 when a medium- or high-confidence positive finding already explains the
 available evidence, or when all evaluated evidence is adequate and clearly
 normal.
+
+## False positives and suppressions
+
+Rules identify client-observable patterns, not confirmed causes. Use this table before acting on a finding:
+
+| Finding | Common confounders / false positives | Built-in guard | Required follow-up |
+|---|---|---|---|
+| `HIGH_FIRST_BYTE_WAIT` | Proxy/CDN buffering, cache misses, rate limiting, or network loss before first response bytes | Requires at least 100 ms and 60% of total median latency plus adequate phase completeness | Correlate with server and proxy traces; repeat from another network path |
+| `CONNECTION_OVERHEAD` | DNS cache state, TLS resumption, proxy tunnels, HTTP/2 multiplexing, or different backend routing | Requires observed new/reused state plus 20 ms absolute and 20% relative delta; ambiguity lowers confidence | Repeat with controlled proxy/protocol settings and inspect connection evidence |
+| `TAIL_VARIABILITY` | Small samples, nonstationary deployments, client GC/CPU pauses, mixed response sizes, or cache warm-up | Requires p95 at least 2x p50 and 100 ms higher; sparse/interrupted evidence is suppressed or lowered | Increase samples within safety limits and segment server evidence by request class |
+| `CONCURRENCY_SENSITIVITY` | Client saturation, connection-pool limits, proxy queues, rate limiting, or autoscaling transitions | Requires at least 25% achieved-rate change; scheduling pressure becomes client-pressure evidence | Verify client headroom, then correlate throughput/errors with server saturation metrics |
+| `ERROR_RATE` | Intentional 4xx tests, authentication expiry, canary routing, or retry intermediaries | Separates outcome classes, excludes cancellation from the denominator, and uses a 10% 4xx threshold | Inspect status/error classes and server logs; do not combine 4xx with availability failures |
+| `INSUFFICIENT_EVIDENCE` | Expected unavailable phases, cancellation, incompatible arms, or unchanged achieved load | Emits no likely cause and lists the blocking limitations | Follow its named next measurement rather than inferring normality |
+
+No rule corrects for multiple hypothesis testing or produces a causal probability. Repeated findings across comparable runs increase operational confidence but do not replace server-side corroboration. See [Measurement methodology and limitations](methodology.md).
