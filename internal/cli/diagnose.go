@@ -13,13 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newDiagnoseCommand(stdout, stderr io.Writer) *cobra.Command {
+func newDiagnoseCommand(stdout, stderr io.Writer, presentation *presentationOptions) *cobra.Command {
 	options := config.Defaults()
 	var headers []string
 	var bodyFile string
 	var quiet bool
-	var colorMode = string(options.Color)
-	var ascii bool
 	var jsonOutput bool
 
 	command := &cobra.Command{
@@ -29,7 +27,7 @@ func newDiagnoseCommand(stdout, stderr io.Writer) *cobra.Command {
 			return invalidUsage(cobra.ExactArgs(1)(command, args))
 		},
 		RunE: func(command *cobra.Command, args []string) error {
-			options.Color = config.ColorMode(colorMode)
+			options.Color = presentation.colorMode()
 			input := config.Input{Target: args[0], Headers: headers, Options: options}
 			if err := config.Validate(input); err != nil {
 				return err
@@ -78,7 +76,7 @@ func newDiagnoseCommand(stdout, stderr io.Writer) *cobra.Command {
 				outputErr = output.WriteJSON(document)
 			} else {
 				outputErr = render.Diagnose(stdout, document, render.Options{
-					Width: terminalWidth(), Color: useColor(options.Color, stdout), ASCII: ascii,
+					Width: terminalWidth(), Color: useColor(options.Color, stdout), ASCII: presentation.ASCII,
 				})
 			}
 			if outputErr != nil {
@@ -100,8 +98,6 @@ func newDiagnoseCommand(stdout, stderr io.Writer) *cobra.Command {
 	flags.BoolVar(&options.FollowRedirects, "follow-redirects", options.FollowRedirects, "follow bounded HTTP redirects")
 	flags.IntVar(&options.RedirectLimit, "redirect-limit", options.RedirectLimit, "maximum redirect hops")
 	flags.Int64Var(&options.BodyLimit, "body-limit", options.BodyLimit, "maximum response-body bytes per request")
-	flags.StringVar(&colorMode, "color", colorMode, "color mode: auto, always, or never")
-	flags.BoolVar(&ascii, "ascii", false, "use ASCII-only terminal output")
 	flags.BoolVar(&jsonOutput, "json", false, "write one machine-readable JSON document")
 	flags.BoolVar(&quiet, "quiet", false, "suppress plan and progress output")
 	flags.BoolVar(&options.AllowHighLoad, "allow-high-load", false, "acknowledge settings above normal safety limits")

@@ -14,11 +14,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newCompareCommand(stdout, stderr io.Writer) *cobra.Command {
+func newCompareCommand(stdout, stderr io.Writer, presentation *presentationOptions) *cobra.Command {
 	var threshold float64
 	var metric = string(comparemodel.GateP95)
-	var colorMode = string(config.ColorAuto)
-	var ascii bool
 
 	command := &cobra.Command{
 		Use:   "compare BEFORE.json AFTER.json",
@@ -35,7 +33,7 @@ func newCompareCommand(stdout, stderr io.Writer) *cobra.Command {
 			if gateEnabled && (threshold < 0 || math.IsNaN(threshold) || math.IsInf(threshold, 0)) {
 				return invalidUsage(fmt.Errorf("--fail-on-regression must be a finite non-negative percentage"))
 			}
-			color := config.ColorMode(colorMode)
+			color := presentation.colorMode()
 			if color != config.ColorAuto && color != config.ColorAlways && color != config.ColorNever {
 				return invalidUsage(fmt.Errorf("--color must be auto, always, or never"))
 			}
@@ -60,13 +58,13 @@ func newCompareCommand(stdout, stderr io.Writer) *cobra.Command {
 			if gateEnabled && !compatibility.GateEligible {
 				display := compatibility
 				display.DescriptiveEligible = false
-				if err := render.Comparison(stdout, display, comparemodel.DeltaReport{}, render.Options{Width: terminalWidth(), Color: useColor(color, stdout), ASCII: ascii}); err != nil {
+				if err := render.Comparison(stdout, display, comparemodel.DeltaReport{}, render.Options{Width: terminalWidth(), Color: useColor(color, stdout), ASCII: presentation.ASCII}); err != nil {
 					return fmt.Errorf("write comparison: %w", err)
 				}
 				return WithExitCode(ExitUsage, errors.New("reports are incompatible with regression-gate requirements"))
 			}
 			if !compatibility.DescriptiveEligible {
-				if err := render.Comparison(stdout, compatibility, comparemodel.DeltaReport{}, render.Options{Width: terminalWidth(), Color: useColor(color, stdout), ASCII: ascii}); err != nil {
+				if err := render.Comparison(stdout, compatibility, comparemodel.DeltaReport{}, render.Options{Width: terminalWidth(), Color: useColor(color, stdout), ASCII: presentation.ASCII}); err != nil {
 					return fmt.Errorf("write comparison: %w", err)
 				}
 				return WithExitCode(ExitUsage, errors.New("reports have no compatible experiment evidence"))
@@ -76,7 +74,7 @@ func newCompareCommand(stdout, stderr io.Writer) *cobra.Command {
 			if err != nil {
 				return WithExitCode(ExitUsage, err)
 			}
-			if err := render.Comparison(stdout, compatibility, deltas, render.Options{Width: terminalWidth(), Color: useColor(color, stdout), ASCII: ascii}); err != nil {
+			if err := render.Comparison(stdout, compatibility, deltas, render.Options{Width: terminalWidth(), Color: useColor(color, stdout), ASCII: presentation.ASCII}); err != nil {
 				return fmt.Errorf("write comparison: %w", err)
 			}
 			if !gateEnabled {
@@ -96,8 +94,6 @@ func newCompareCommand(stdout, stderr io.Writer) *cobra.Command {
 	flags := command.Flags()
 	flags.Float64Var(&threshold, "fail-on-regression", 0, "exit 3 when the selected latency metric exceeds this percentage")
 	flags.StringVar(&metric, "metric", metric, "gate metric: p50, p95, or p99")
-	flags.StringVar(&colorMode, "color", colorMode, "color mode: auto, always, or never")
-	flags.BoolVar(&ascii, "ascii", false, "use ASCII-only terminal output")
 	return command
 }
 
