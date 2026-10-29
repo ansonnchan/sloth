@@ -6,7 +6,6 @@ import (
 	"archive/zip"
 	"bufio"
 	"compress/gzip"
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -14,11 +13,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
+
+	"github.com/ansonnchan/sloth/internal/releasecheck"
 )
 
 type target struct {
@@ -236,14 +235,5 @@ func verifyNativeBinary(binary []byte, name, version, commit string) error {
 	if err := os.WriteFile(path, binary, 0o700); err != nil {
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	output, err := exec.CommandContext(ctx, path, "--version").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("run native archive binary: %w: %s", err, output)
-	}
-	if text := string(output); !strings.Contains(text, version) || !strings.Contains(text, commit) {
-		return fmt.Errorf("native binary version output %q does not contain %q and %q", text, version, commit)
-	}
-	return nil
+	return releasecheck.RunPlatformSmoke(path, version, commit, runtime.GOOS+"-"+runtime.GOARCH)
 }

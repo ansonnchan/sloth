@@ -54,6 +54,9 @@ jobs:
       - name: Validate report workflow fixtures
         run: go test ./internal/report -run 'TestWorkflowFixtures|TestCommittedReportExamples'
 
+      - name: Validate documentation links and commands
+        run: go run ./scripts/docs-check
+
       - name: Build
         run: go build ./...
 

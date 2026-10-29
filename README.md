@@ -6,7 +6,7 @@ Sloth is a standalone Go CLI for bounded HTTP diagnosis. It measures seven clien
 
 ## Install
 
-Download the archive for macOS, Linux, or Windows from [GitHub Releases](https://github.com/ansonnchan/sloth/releases), verify it against `checksums.txt`, and place `sloth` (`sloth.exe` on Windows) on `PATH`. Complete archive and checksum instructions are in [Release artifacts and installation](docs/releases.md).
+Once `v1.0.0` is published, download the archive for macOS, Linux, or Windows from [GitHub Releases](https://github.com/ansonnchan/sloth/releases), verify it against `checksums.txt`, and place `sloth` (`sloth.exe` on Windows) on `PATH`. Complete archive and checksum instructions are in [Release artifacts and installation](docs/releases.md).
 
 After the `v1.0.0` tag is published, Go users can install the same source revision with:
 
