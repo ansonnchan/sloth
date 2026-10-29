@@ -1,159 +1,106 @@
 # Sloth
 
-> Find out what's slowing you down.
+> Find out where an HTTP request spends time—without pretending client-side evidence is a server trace.
 
-Sloth is a lightweight HTTP diagnostic CLI that helps developers understand
-where an API request spends time and which observable latency patterns deserve
-further investigation.
+Sloth is a standalone Go CLI for bounded HTTP diagnosis. It measures seven client-observable latency intervals, runs controlled connection and concurrency experiments, applies six deterministic evidence rules, and saves privacy-safe reports that can gate regressions in CI.
 
-Instead of acting as another general HTTP client or high-scale load generator,
-Sloth combines bounded measurements, controlled experiments, statistics, and
-evidence-based explanations in one local Go binary.
+## Install
 
-> [!NOTE]
-> Sloth is under active development. Inspect, diagnose, export, comparison,
-> hardening, and local example workflows are available; public v1 packaging
-> remains in progress.
+Once `v1.0.0` is published, download the archive for macOS, Linux, or Windows from [GitHub Releases](https://github.com/ansonnchan/sloth/releases), verify it against `checksums.txt`, and place `sloth` (`sloth.exe` on Windows) on `PATH`. Complete archive and checksum instructions are in [Release artifacts and installation](docs/releases.md).
 
-## Workflows
+After the `v1.0.0` tag is published, Go users can install the same source revision with:
 
-```bash
-# Inspect one bounded request
-sloth inspect http://localhost:8080/api/users
-
-# Run controlled diagnostic experiments
-sloth diagnose http://localhost:8080/api/users
-
-# Save a versioned, redacted JSON report
-sloth export http://localhost:8080/api/users
-
-# Save somewhere other than the existing Desktop (parent directory must exist)
-sloth export --output ./reports/baseline.json http://localhost:8080/api/users
-
-# Compare two compatible runs
-sloth compare before.json after.json --fail-on-regression 20
+```sh
+go install github.com/ansonnchan/sloth/cmd/sloth@v1.0.0
 ```
 
-Sloth will measure client-observable DNS, TCP, TLS, first-byte, and body-transfer
-behavior where those phases are available. It will not claim to see internal
-server execution, database queries, or downstream traces.
+## Sixty-second local quick start
 
-## Product principles
+Start the deterministic loopback-only sample API:
 
-- Explain measurements without presenting hypotheses as confirmed root causes.
-- Preserve unavailable timing phases as `N/A`, never invented zero values.
-- Bound request count, rate, concurrency, timeout, response reads, and memory.
-- Keep scheduling delay separate so overload is not silently hidden.
-- Redact credentials and sensitive URL values from output and reports.
-- Keep terminal output readable while providing stable machine-readable JSON.
-- Require compatible workloads before declaring a regression or improvement.
-
-## Architecture
-
-```mermaid
-flowchart TD
-    CLI[CLI and validation] --> Runner[Experiment runner]
-    Runner --> Scheduler[Scheduler and rate limiter]
-    Runner --> HTTP[HTTP measurement]
-    HTTP --> Trace[net/http and httptrace]
-    Trace --> Samples[Request samples]
-    Scheduler --> Samples
-    Samples --> Metrics[Metrics aggregation]
-    Metrics --> Diagnosis[Diagnostic rules]
-    Diagnosis --> Report[Structured report]
-    Report --> Terminal[Terminal output]
-    Report --> JSON[Versioned JSON]
-    JSON --> Compare[Comparison and CI gate]
+```sh
+go run ./examples/sample-api --listen 127.0.0.1:8080
 ```
 
-The CLI, request execution, experiment scheduling, metrics, diagnosis, and
-reporting layers remain separate so each can be tested independently. See
-[Architecture and ownership](docs/architecture.md) for package boundaries,
-cancellation, and data ownership.
+In another terminal, inspect one delayed response:
 
-## Roadmap
+```sh
+sloth inspect http://127.0.0.1:8080/delay?ms=120
+```
 
-Work is organized as ordered `SH-XX` issues:
+Then run a small diagnostic suite against a concurrency-sensitive route:
 
-| Range | Milestone | Outcome |
-|---|---|---|
-| SH-01–SH-08 | Foundation | Buildable CLI, configuration, safety, and CI |
-| SH-09–SH-18 | Inspect | Accurate bounded single-request measurement |
-| SH-19–SH-30 | Runner & Metrics | Controlled scheduling, concurrency, and statistics |
-| SH-31–SH-40 | Diagnosis | Six deterministic evidence-backed rules |
-| SH-41–SH-51 | Export & Compare | Versioned reports, comparisons, and CI gates |
-| SH-52–SH-58 | Hardening | Security, failures, benchmarks, examples, and docs |
-| SH-59–SH-62 | v1 Release | Platform builds, packages, demo, and release review |
-| SH-63–SH-68 | Post-v1 | Optional diagnostic and CI improvements |
+```sh
+sloth diagnose --requests 10 --warmups 0 --rate 100 --concurrency 1,2 \
+  http://127.0.0.1:8080/concurrency?delay_ms=30
+```
 
-See the [technical documentation index](docs/README.md),
-[command reference](docs/commands.md), [methodology](docs/methodology.md),
-[delivery roadmap](docs/planning/roadmap.md),
-[context graph](docs/planning/context-graph.md), and
-[issue backlog](docs/planning/issue-backlog.md) for the current planning source.
-Shared runtime defaults are documented in [Configuration](docs/configuration.md).
-Automation-facing streams and statuses are documented in the
-[CLI contract](docs/cli-contract.md).
-Version injection is documented in [Build metadata](docs/builds.md).
-The standalone inspect machine format is documented in
-[Inspect JSON](docs/inspect-json.md).
+The sample output is illustrative; real endpoint results depend on the client, network path, workload, and server.
 
-## Branch and release flow
+## Four core workflows
+
+```sh
+# One bounded request with phase availability and one careful interpretation
+sloth inspect https://api.example.com/health
+
+# Baseline, connection reuse, and concurrency experiments with six rules
+sloth diagnose https://api.example.com/health
+
+# Atomic, versioned, redacted evidence
+sloth export --output before.json https://api.example.com/health
+sloth export --output after.json https://api.example.com/health
+
+# Compatible deltas; optionally return exit 3 on a confirmed p95 regression
+sloth compare --fail-on-regression 20 before.json after.json
+```
+
+See the complete [command and flag reference](docs/commands.md) for defaults, safety acknowledgements, machine JSON, and exit behavior.
+
+## Real terminal recording
+
+The committed [asciinema recording](docs/demo/sloth.cast) uses a real GoReleaser release-candidate binary and the local sample API. Play it with:
+
+```sh
+asciinema play docs/demo/sloth.cast
+```
+
+Its displayed metrics are genuine local measurements and illustrative only. Reproduction details and the exact RC commit are in the [demo notes](docs/demo/README.md).
+
+## What Sloth measures
+
+Sloth records total request time plus DNS, TCP connect, TLS, request write, first-byte wait, and body transfer when the Go HTTP trace exposes defensible boundaries. Missing, reused, cleartext, incomplete, or out-of-order phases remain `N/A`; phases are not forced to sum to total time.
+
+The diagnostic suite keeps planned arrivals, scheduling delay, achieved rate, actual concurrency, outcomes, and warm-ups distinct. Findings separate observations, possible causes, and recommended next checks.
+
+## What Sloth cannot prove
+
+Sloth cannot see application code, database queries, internal queues, downstream traces, or a confirmed root cause. Client load, proxies, caches, HTTP/2 reuse, small samples, and coordinated omission can confound results. Read the [methodology and limitations](docs/methodology.md) before making production decisions.
+
+## Safety, privacy, and automation
+
+- Conservative defaults and hard ceilings bound requests, rate, concurrency, timeout, body reads, redirects, and report size.
+- Unsafe methods and unusually large workloads require explicit noninteractive acknowledgements.
+- Reports exclude raw URLs, query values, headers, cookies, credentials, request/response bodies, and raw underlying errors.
+- Human output, machine JSON, progress streams, and exit codes have stable documented contracts.
+- Comparison gates refuse incompatible, interrupted, zero-baseline, or insufficient evidence rather than silently passing.
+
+## Architecture and documentation
+
+Sloth is a local pipeline:
 
 ```text
-main  <---------------- milestone release PR ---------------- dev
-                                                               ^
-                                                               |
-                                            SH-XX feature branches
+validated config -> bounded experiments -> HTTP trace samples
+                 -> exact aggregates -> deterministic findings
+                 -> terminal/JSON report -> compatible comparison
 ```
 
-- Feature branches are created from `dev` and use names such as
-  `SH-16-add-inspect-command`.
-- Feature pull requests target `dev` for integration and QA.
-- `dev` is proposed for `main` only after a roadmap milestone's acceptance gate
-  passes.
-- Approval and merging are deliberate maintainer actions; agents stop before
-  either unless explicitly authorized.
-
-## Benchmark status
-
-Client-only microbenchmarks cover tracing, phase derivation, aggregation,
-render-free scheduling at normal safety ceilings, and report serialization.
-The [benchmark procedure](docs/benchmarking.md) and
-[M6 evidence record](docs/benchmarks/m6-darwin-arm64.md) publish environment
-metadata, exact commands, results, and interpretation limits. These are local
-client-overhead measurements, not claims about remote server performance.
-
-## Planned installation
-
-Once the first release exists:
-
-```bash
-go install github.com/ansonnchan/sloth/cmd/sloth@latest
-```
-
-Standalone archives are planned for macOS ARM64/AMD64, Linux ARM64/AMD64, and
-Windows AMD64. Homebrew publishing is intentionally post-v1.
+Start with the [technical documentation index](docs/README.md), [architecture and ownership](docs/architecture.md), [timing semantics](docs/timing.md), and [diagnostic thresholds](docs/diagnostics.md).
 
 ## Development
 
-The project uses Go and Cobra. Planned measurement work will use `net/http` and
-`net/http/httptrace`; release automation will use GitHub Actions and GoReleaser.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for issue naming, branch workflow,
-required checks, and pull-request expectations.
+Sloth requires Go 1.24 or newer. From the repository root:
 
-Run the current CLI from the repository root:
-
-```bash
-go run ./cmd/sloth --help
-go run ./cmd/sloth --version
-go run ./cmd/sloth inspect https://example.com --color never
-go run ./cmd/sloth inspect https://example.com --json
-```
-
-Verification commands:
-
-```bash
+```sh
 test -z "$(gofmt -l .)"
 go vet ./...
 go test ./...
@@ -161,8 +108,7 @@ go test -race ./...
 go build ./...
 ```
 
-Read [AGENTS.md](AGENTS.md) and the linked technical/planning documents before
-changing behavior.
+Contributions use `SH-XX-short-description` branches targeting `dev`. See [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).
 
 ## License
 

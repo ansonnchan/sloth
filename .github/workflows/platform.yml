@@ -1,0 +1,68 @@
+name: Platform smoke
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+  push:
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOFLAGS: -mod=readonly
+  SMOKE_VERSION: v1.0.0-rc.smoke
+
+jobs:
+  native-smoke:
+    name: Smoke ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-amd64
+            runner: ubuntu-24.04
+            binary: ./sloth
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+            binary: ./sloth
+          - target: darwin-amd64
+            runner: macos-15-intel
+            binary: ./sloth
+          - target: darwin-arm64
+            runner: macos-15
+            binary: ./sloth
+          - target: windows-amd64
+            runner: windows-2025
+            binary: ./sloth.exe
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build native binary without CGO
+        shell: bash
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          ldflags="-X github.com/ansonnchan/sloth/internal/buildinfo.version=${SMOKE_VERSION} -X github.com/ansonnchan/sloth/internal/buildinfo.commit=${GITHUB_SHA} -X github.com/ansonnchan/sloth/internal/buildinfo.buildTime=1970-01-01T00:00:00Z -X github.com/ansonnchan/sloth/internal/buildinfo.dirty=false"
+          go build -trimpath -buildvcs=false -ldflags "$ldflags" -o "${{ matrix.binary }}" ./cmd/sloth
+
+      - name: Exercise installed workflows
+        shell: bash
+        run: go run ./scripts/platform-smoke --binary "${{ matrix.binary }}" --version "${SMOKE_VERSION}" --commit "${GITHUB_SHA}" --target "${{ matrix.target }}"

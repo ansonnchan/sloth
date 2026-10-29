@@ -7,6 +7,7 @@ Start with the [command reference](commands.md) to run Sloth or the [methodology
 - [Commands and flags](commands.md): syntax, defaults, safety behavior, and examples for every command.
 - [Configuration and safety ceilings](configuration.md): validation, traffic budgets, and acknowledgement boundaries.
 - [Local sample API](../examples/sample-api/README.md): reproducible targets for inspect, diagnose, export, and compare.
+- [Real terminal demo](demo/README.md): genuine release-candidate output and reproduction steps.
 - [CLI streams and exit codes](cli-contract.md): stdout/stderr separation, terminal behavior, and automation statuses.
 - [Network failures](network-failures.md): observable failure categories and partial evidence.
 
@@ -28,6 +29,9 @@ Start with the [command reference](commands.md) to run Sloth or the [methodology
 
 - [Architecture](architecture.md): data flow, ownership, cancellation, and package boundaries.
 - [Security threat model](security-threat-model.md), [fuzzing](fuzzing.md), and [build metadata](builds.md).
+- [Supported platforms](platforms.md): native smoke coverage and filesystem/signal limitations.
+- [Release artifacts and installation](releases.md): archive naming, checksums, installation, and snapshot reproduction.
+- [v1 readiness review](v1-readiness.md) and [candidate release notes](release-notes/v1.0.0.md): go/no-go evidence and accepted limitations.
 - [Planning](planning/README.md): roadmap, issue dependencies, and historical decisions.
 
 ## Behavior traceability
