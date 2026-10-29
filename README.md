@@ -4,6 +4,8 @@
 
 Sloth is a standalone Go CLI for bounded HTTP diagnosis. It measures seven client-observable latency intervals, runs controlled connection and concurrency experiments, applies six deterministic evidence rules, and saves privacy-safe reports that can gate regressions in CI.
 
+![Sloth inspect output showing first-byte wait as the dominant client-observable latency phase](docs/demo/sloth-inspect.png)
+
 ## Install
 
 Once `v1.0.0` is published, download the archive for macOS, Linux, or Windows from [GitHub Releases](https://github.com/ansonnchan/sloth/releases), verify it against `checksums.txt`, and place `sloth` (`sloth.exe` on Windows) on `PATH`. Complete archive and checksum instructions are in [Release artifacts and installation](docs/releases.md).
