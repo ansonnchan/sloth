@@ -3,7 +3,9 @@ package cli
 import (
 	"bytes"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/ansonnchan/sloth/examples/sample-api/sampleapi"
@@ -11,6 +13,16 @@ import (
 )
 
 func TestSampleAPISmokeWorkflows(t *testing.T) {
+	readme, err := os.ReadFile(filepath.Join("..", "..", "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, command := range []string{"sloth inspect", "sloth diagnose", "sloth export", "sloth compare"} {
+		if !strings.Contains(string(readme), command) {
+			t.Fatalf("README does not document exercised workflow %q", command)
+		}
+	}
+
 	server := httptest.NewServer(sampleapi.NewHandler())
 	t.Cleanup(server.Close)
 
