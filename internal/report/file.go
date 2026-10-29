@@ -152,12 +152,3 @@ func WriteAtomic(path string, data []byte, force bool) (returnErr error) {
 	}
 	return nil
 }
-
-func syncDirectory(path string) error {
-	directory, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer directory.Close()
-	return directory.Sync()
-}
